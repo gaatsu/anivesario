@@ -1,0 +1,124 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(ADMIN)
+
+  events    Event[]
+  delegates Delegate[] @relation("MasterAdmin")
+  delegated Delegate[] @relation("DelegateUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  MASTER_ADMIN
+  ADMIN
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  type         String   @default("birthday")
+  eventDate    DateTime
+
+  creatorId    String
+  creator      User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  shareLink    String   @unique @default(cuid())
+  status       EventStatus @default(ACTIVE)
+
+  animations   String[] @default([])
+
+  postits      Postit[]
+  qrCode       QRCode?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@index([creatorId])
+  @@index([shareLink])
+}
+
+enum EventStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+model Postit {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name      String
+  message   String
+
+  color     String   @default("#FEF08A")
+  icon      String?
+
+  positionX Float    @default(0)
+  positionY Float    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+}
+
+model Delegate {
+  id        String   @id @default(cuid())
+
+  creatorId String
+  creator   User     @relation("MasterAdmin", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  delegateEmail String
+  delegateId    String?
+  delegateUser  User?   @relation("DelegateUser", fields: [delegateId], references: [id], onDelete: SetNull)
+
+  status    DelegateStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([creatorId, delegateEmail])
+  @@index([creatorId])
+}
+
+enum DelegateStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  url       String
+
+  generatedAt DateTime @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  sessionToken String @unique
+  userId    String
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -16,6 +16,7 @@
     "@hookform/resolvers": "^5.5.7",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@stackframe/stack": "^2.8.108",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
     "@types/pg": "^8.20.0",

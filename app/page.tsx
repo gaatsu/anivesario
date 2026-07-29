@@ -75,10 +75,6 @@ export default function Home() {
             className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold hover:shadow-lg transition-shadow">
             Entrar
           </Link>
-          <Link href="/auth/register"
-            className="px-8 py-3 bg-white border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-            Criar Conta
-          </Link>
         </div>
 
         <p className="text-sm text-gray-500 max-w-md mx-auto">

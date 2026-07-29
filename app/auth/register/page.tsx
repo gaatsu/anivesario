@@ -51,7 +51,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Criar Conta</h1>
-          <p className="text-gray-600">Comece a criar seus murais!</p>
+          <p className="text-gray-600">
+            Disponível apenas para o primeiro acesso (master admin) ou para
+            quem recebeu um convite de administrador delegado.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

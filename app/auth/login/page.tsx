@@ -3,7 +3,6 @@
 import { authClient } from "@/lib/neon-auth-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import Link from "next/link"
 import { Mail, Lock, ArrowRight } from "lucide-react"
 
 export default function LoginPage() {
@@ -100,14 +99,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center">
-          <p className="text-gray-600">
-            Não tem conta?{" "}
-            <Link href="/auth/register" className="text-pink-500 font-semibold hover:underline">
-              Criar conta
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-xs text-gray-400">
+          Acesso restrito a administradores convidados.
+        </p>
       </div>
     </div>
   )

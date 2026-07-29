@@ -12,13 +12,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* This app uses a fixed light theme (pink/purple gradients, white cards) —
+   no dark-mode variants exist for it, so we don't invert on system
+   preference. Without this, text with no explicit Tailwind color class
+   (e.g. typed input text) inherits near-white from prefers-color-scheme
+   and becomes invisible on the light backgrounds used everywhere. */
 body {
   background: var(--background);
   color: var(--foreground);

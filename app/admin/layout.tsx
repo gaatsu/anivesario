@@ -1,23 +1,22 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { authClient } from "@/lib/neon-auth-client"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import Link from "next/link"
 import { LogOut, LayoutDashboard, Users } from "lucide-react"
-import { signOut } from "next-auth/react"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession()
+  const { data: session, isPending } = authClient.useSession()
   const router = useRouter()
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!isPending && !session) {
       router.push("/auth/login")
     }
-  }, [status, router])
+  }, [isPending, session, router])
 
-  if (status === "loading") {
+  if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -28,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (status === "unauthenticated") {
+  if (!session) {
     return null
   }
 
@@ -56,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="absolute bottom-6 left-6 right-6">
           <button
-            onClick={() => signOut()}
+            onClick={() => authClient.signOut().then(() => router.push("/auth/login"))}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium"
           >
             <LogOut className="w-5 h-5" />

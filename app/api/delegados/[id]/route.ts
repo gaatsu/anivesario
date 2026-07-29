@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
 
 export async function DELETE(
@@ -9,16 +8,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
     const delegate = await db.delegate.findFirst({
       where: {
         id,
-        creatorId: session.user.id,
+        creatorId: user.id,
       },
     })
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { signIn } from "next-auth/react"
+import { authClient } from "@/lib/neon-auth-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
@@ -19,16 +19,16 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn("credentials", {
+      const { error: signInError } = await authClient.signIn.email({
         email,
         password,
-        redirect: false,
       })
 
-      if (result?.error) {
-        setError(result.error)
-      } else if (result?.ok) {
+      if (signInError) {
+        setError(signInError.message ?? "Credenciais inválidas")
+      } else {
         router.push("/admin/dashboard")
+        router.refresh()
       }
     } catch (err) {
       setError("Erro ao fazer login")

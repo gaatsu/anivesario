@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail, Lock, User, ArrowRight } from "lucide-react"
+import { authClient } from "@/lib/neon-auth-client"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -26,18 +27,17 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const { error: signUpError } = await authClient.signUp.email({
+        name,
+        email,
+        password,
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.message || "Erro ao criar conta")
+      if (signUpError) {
+        setError(signUpError.message ?? "Erro ao criar conta")
       } else {
-        router.push("/auth/login?registered=true")
+        router.push("/admin/dashboard")
+        router.refresh()
       }
     } catch (err) {
       setError("Erro ao criar conta")

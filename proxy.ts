@@ -1,15 +1,6 @@
-import { withAuth } from "next-auth/middleware"
+import { auth } from "@/lib/neon-auth"
 
-export default withAuth(
-  function middleware(req) {
-    return
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
-  }
-)
+export default auth.middleware({ loginUrl: "/auth/login" })
 
 export const config = {
   matcher: ["/admin/:path*"],

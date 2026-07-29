@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { authClient } from "@/lib/neon-auth-client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus, Calendar, Share2, Trash2 } from "lucide-react"
@@ -17,7 +17,7 @@ interface Event {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession()
+  const { data: session } = authClient.useSession()
   const [events, setEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showNewEventForm, setShowNewEventForm] = useState(false)

@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
     const delegates = await db.delegate.findMany({
       where: {
-        creatorId: session.user.id,
+        creatorId: user.id,
       },
       orderBy: {
         createdAt: "desc",
@@ -32,9 +31,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.id || session.user.role !== "MASTER_ADMIN") {
+    if (!user || user.role !== "MASTER_ADMIN") {
       return NextResponse.json(
         { message: "Only master admins can add delegates" },
         { status: 403 }
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Check if delegate already exists
     const existing = await db.delegate.findFirst({
       where: {
-        creatorId: session.user.id,
+        creatorId: user.id,
         delegateEmail,
       },
     })
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const delegate = await db.delegate.create({
       data: {
-        creatorId: session.user.id,
+        creatorId: user.id,
         delegateEmail,
         status: "PENDING",
       },

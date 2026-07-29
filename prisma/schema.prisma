@@ -7,11 +7,12 @@ generator client {
   output   = "../generated/prisma"
 }
 
+// id matches the Neon Auth user id (not generated here) — Neon Auth owns
+// credentials and sessions; this table only tracks app-level roles.
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id
   email     String   @unique
   name      String
-  password  String
   role      UserRole @default(ADMIN)
 
   events    Event[]
@@ -113,12 +114,3 @@ model QRCode {
   generatedAt DateTime @default(now())
 }
 
-model Session {
-  id        String   @id @default(cuid())
-  sessionToken String @unique
-  userId    String
-
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}

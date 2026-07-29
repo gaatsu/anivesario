@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
 import { v4 as uuid } from "uuid"
 import { EVENT_LIFETIME_MS } from "@/lib/eventLifecycle"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
     // Lazily purge this user's expired events before listing
     await db.event.deleteMany({
       where: {
-        creatorId: session.user.id,
+        creatorId: user.id,
         createdAt: { lt: new Date(Date.now() - EVENT_LIFETIME_MS) },
       },
     })
 
     const events = await db.event.findMany({
       where: {
-        creatorId: session.user.id,
+        creatorId: user.id,
         deletedAt: null,
       },
       include: {
@@ -46,9 +45,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
@@ -68,13 +67,13 @@ export async function POST(request: NextRequest) {
         eventDate: new Date(eventDate),
         type: type || "birthday",
         shareLink: uuid(),
-        creatorId: session.user.id,
+        creatorId: user.id,
         animations: animations || [],
       },
     })
 
     // Generate QR code URL
-    const muralUrl = `${process.env.NEXTAUTH_URL}/eventos/${event.shareLink}/mural`
+    const muralUrl = `${process.env.APP_URL}/eventos/${event.shareLink}/mural`
 
     return NextResponse.json(
       {

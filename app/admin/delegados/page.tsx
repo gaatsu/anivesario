@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { authClient } from "@/lib/neon-auth-client"
 import { useEffect, useState } from "react"
 import { Plus, Trash2, Users } from "lucide-react"
 
@@ -12,7 +12,7 @@ interface Delegate {
 }
 
 export default function DelegadosPage() {
-  const { data: session } = useSession()
+  const { data: session } = authClient.useSession()
   const [delegates, setDelegates] = useState<Delegate[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

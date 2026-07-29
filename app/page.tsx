@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { authClient } from "@/lib/neon-auth-client"
 import { Cake, Gift, PartyPopper } from "lucide-react"
 
 export default function Home() {
-  const { data: session } = useSession()
+  const { data: session } = authClient.useSession()
 
   if (session) {
     return (

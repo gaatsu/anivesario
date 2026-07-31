@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react"
 import { Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import AnimationLayer from "@/components/Animations/AnimationLayer"
+import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
 
 interface Postit {
   id: string
@@ -20,13 +21,10 @@ interface EventData {
   title: string
   description?: string
   eventDate: string
+  type: string
   animations: string[]
   postits: Postit[]
 }
-
-// Quanto tempo a festa dura ao abrir. Longo o suficiente para dar o efeito de
-// revelação, curto o suficiente para não atrapalhar a leitura dos recados.
-const DURACAO_ANIMACAO_MS = 8000
 
 export default function RevelacaoPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
@@ -49,10 +47,11 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
       setEvent(data)
 
       // A animação é o ponto deste link: dispara assim que o mural chega, e não
-      // ao deixar um recado (que é o que acontecia no link de coleta).
+      // ao deixar um recado (que é o que acontecia no link de coleta). Não há
+      // timeout aqui: o AnimationLayer é quem decai da celebração para o
+      // movimento de fundo, que fica rodando enquanto a pessoa lê.
       if (data.animations?.length) {
         setShowAnimations(true)
-        setTimeout(() => setShowAnimations(false), DURACAO_ANIMACAO_MS)
       }
     } catch {
       setError("Erro ao carregar o mural")
@@ -108,9 +107,16 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
 
   return (
     <div className="min-h-screen p-4 md:p-8">
-      {showAnimations && <AnimationLayer animations={event.animations} />}
+      {showAnimations && (
+        <AnimationLayer
+          animations={event.animations}
+          cores={PALETA_ANIMACAO[resolverTema(event.type).id]}
+        />
+      )}
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      {/* relative z-0 dá contexto de empilhamento próprio: o canvas usa -z-10, e
+          sem isto a ordem dependeria do DOM em vez de ser explícita. */}
+      <div className="relative z-0 max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           {/* bg-pink-600 é fallback: sem cor de fundo por baixo, se o gradiente
               não pintar o título some por completo. */}

@@ -1,37 +1,30 @@
 "use client"
 
-import { useEffect } from "react"
-import confetti from "canvas-confetti"
+import type { PropsAnimacao } from "./tipos"
+import { useRitmo } from "./useRitmo"
 
-function launchFirework(x: number, y: number) {
-  const colors = ["#f472b6", "#a78bfa", "#60a5fa", "#fbbf24", "#34d399"]
-  confetti({
-    particleCount: 60,
-    spread: 360,
-    startVelocity: 30,
-    ticks: 60,
-    origin: { x, y },
-    colors,
-    shapes: ["circle"],
-    scalar: 0.9,
-  })
-}
+export default function FireworksAnimation({ fase, cores, intensidade, disparar }: PropsAnimacao) {
+  const celebrando = fase === "celebracao"
 
-export default function FireworksAnimation() {
-  useEffect(() => {
-    const duration = 4000
-    const end = Date.now() + duration
+  useRitmo(() => {
+    // Estouros nas laterais preservam o centro da tela, que é onde ficam os
+    // recados.
+    const x = Math.random() < 0.5 ? 0.1 + Math.random() * 0.2 : 0.7 + Math.random() * 0.2
 
-    const interval = setInterval(() => {
-      if (Date.now() > end) {
-        clearInterval(interval)
-        return
-      }
-      launchFirework(Math.random() * 0.8 + 0.1, Math.random() * 0.4 + 0.1)
-    }, 500)
-
-    return () => clearInterval(interval)
-  }, [])
+    disparar({
+      particleCount: Math.max(3, Math.round(60 * intensidade)),
+      angle: 90,
+      spread: 360,
+      startVelocity: celebrando ? 35 : 18,
+      decay: 0.9,
+      gravity: 1.1,
+      shapes: ["circle"],
+      scalar: celebrando ? 1 : 0.7,
+      ticks: celebrando ? 200 : 320,
+      origin: { x, y: 0.2 + Math.random() * 0.3 },
+      colors: cores,
+    })
+  }, celebrando ? 500 : 3200)
 
   return null
 }

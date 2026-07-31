@@ -1,37 +1,32 @@
 "use client"
 
-import { useEffect } from "react"
-import confetti from "canvas-confetti"
+import type { PropsAnimacao } from "./tipos"
+import { useRitmo } from "./useRitmo"
 
-export default function ConfettiAnimation() {
-  useEffect(() => {
-    const duration = 3000
-    const end = Date.now() + duration
+export default function ConfettiAnimation({ fase, cores, intensidade, disparar }: PropsAnimacao) {
+  const celebrando = fase === "celebracao"
 
-    const interval = setInterval(() => {
-      if (Date.now() > end) {
-        clearInterval(interval)
-        return
+  useRitmo(() => {
+    const quantidade = Math.max(2, Math.round(30 * intensidade))
+
+    // Duas escalas por rajada dão profundidade: as peças menores parecem mais
+    // distantes e caem mais devagar.
+    for (const escala of [1, 0.7]) {
+      for (const [angulo, x] of [[60, 0], [120, 1]] as const) {
+        disparar({
+          particleCount: quantidade,
+          angle: angulo,
+          spread: celebrando ? 70 : 40,
+          startVelocity: celebrando ? 55 : 25,
+          decay: 0.92,
+          scalar: escala,
+          ticks: celebrando ? 220 : 400,
+          origin: { x, y: 0.7 },
+          colors: cores,
+        })
       }
-
-      confetti({
-        particleCount: 4,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.6 },
-        colors: ["#f472b6", "#a78bfa", "#60a5fa", "#fbbf24"],
-      })
-      confetti({
-        particleCount: 4,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.6 },
-        colors: ["#f472b6", "#a78bfa", "#60a5fa", "#fbbf24"],
-      })
-    }, 150)
-
-    return () => clearInterval(interval)
-  }, [])
+    }
+  }, celebrando ? 350 : 2600)
 
   return null
 }

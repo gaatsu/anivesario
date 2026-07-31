@@ -37,7 +37,10 @@ test("ids desconhecidos são descartados", () => {
 })
 
 test("confetti_paper não aparece como opção no formulário", () => {
-  assert.ok(!ANIMACOES.some((a) => a.id === "confetti_paper"))
+  // Comparação via string porque ANIMACOES é `as const`: hoje o TS já sabe que
+  // esse id não está lá. O teste protege contra alguém reintroduzi-lo.
+  const ids: string[] = ANIMACOES.map((a) => a.id)
+  assert.ok(!ids.includes("confetti_paper"))
   assert.equal(ANIMACOES.length, 6)
 })
 

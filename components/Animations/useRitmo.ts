@@ -16,8 +16,16 @@ export function useRitmo(acao: () => void, intervaloMs: number) {
   }, [acao])
 
   useEffect(() => {
-    acaoRef.current()
+    // A primeira rajada vai num requestAnimationFrame, não direto: os efeitos
+    // dos filhos rodam antes dos do pai, e o AnimationLayer só cria a instância
+    // do confetti no efeito dele. Chamar aqui na hora perderia o primeiro
+    // disparo — justo o estouro de abertura, que é o ponto da tela.
+    const quadro = requestAnimationFrame(() => acaoRef.current())
     const id = setInterval(() => acaoRef.current(), intervaloMs)
-    return () => clearInterval(id)
+
+    return () => {
+      cancelAnimationFrame(quadro)
+      clearInterval(id)
+    }
   }, [intervaloMs])
 }

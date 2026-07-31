@@ -28,8 +28,14 @@ export async function GET() {
     })
 
     const agora = new Date()
+    // Tipo derivado do próprio resultado: sem o client do Prisma gerado (caso do
+    // ambiente local, onde o download do engine é bloqueado) `delegates` é any, e
+    // um parâmetro sem anotação viraria erro de implicit any.
     return NextResponse.json(
-      delegates.map((d) => ({ ...d, expired: d.status === "PENDING" && d.expiresAt < agora }))
+      delegates.map((d: (typeof delegates)[number]) => ({
+        ...d,
+        expired: d.status === "PENDING" && d.expiresAt < agora,
+      }))
     )
   } catch (error) {
     console.error("Error fetching delegates:", error)

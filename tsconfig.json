@@ -3,6 +3,10 @@
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    // prisma/seed.ts e os arquivos *.test.ts rodam direto no Node (type stripping
+    // nativo), onde o resolvedor ESM exige a extensão explícita no import.
+    // Permitido aqui porque noEmit está ligado — o TS nunca gera esses caminhos.
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

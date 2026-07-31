@@ -5,7 +5,29 @@ import { use, useCallback, useEffect, useRef, useState } from "react"
 import { Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import AnimationLayer from "@/components/Animations/AnimationLayer"
+import Abertura from "@/components/Abertura/Abertura"
 import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
+
+// sessionStorage é bloqueado em navegação privada e com cookies desativados, e
+// aí lança em vez de retornar null. Falhar para "ainda não viu" é o lado certo
+// de errar: mostra a abertura de novo, em vez de nunca mostrar.
+const chaveAbertura = (token: string) => `abertura:${token}`
+
+function jaViuAbertura(token: string): boolean {
+  try {
+    return sessionStorage.getItem(chaveAbertura(token)) !== null
+  } catch {
+    return false
+  }
+}
+
+function marcarAberturaVista(token: string) {
+  try {
+    sessionStorage.setItem(chaveAbertura(token), "1")
+  } catch {
+    /* sem persistência: a abertura toca de novo, o que é aceitável */
+  }
+}
 
 interface Postit {
   id: string
@@ -34,6 +56,7 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [showAnimations, setShowAnimations] = useState(false)
+  const [mostrarAbertura, setMostrarAbertura] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const muralRef = useRef<HTMLDivElement>(null)
 
@@ -46,6 +69,15 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
       }
       const data: EventData = await res.json()
       setEvent(data)
+
+      // A abertura é a surpresa, e surpresa só acontece uma vez: quem recarregar
+      // a página cai direto no mural. sessionStorage e não localStorage porque
+      // reabrir o link semanas depois merece a cena de novo.
+      if (!jaViuAbertura(token)) {
+        marcarAberturaVista(token)
+        setMostrarAbertura(true)
+        return
+      }
 
       // A animação é o ponto deste link: dispara assim que o mural chega, e não
       // ao deixar um recado (que é o que acontecia no link de coleta). Não há
@@ -110,6 +142,21 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      {mostrarAbertura && (
+        <Abertura
+          tema={tema}
+          nome={event.title}
+          cores={PALETA_ANIMACAO[tema.id]}
+          aoTerminar={() => {
+            setMostrarAbertura(false)
+            // Só agora: disparar o confetti atrás da abertura desperdiçaria a
+            // rajada de celebração, que é justamente a parte que a pessoa vê uma
+            // vez só.
+            if (event.animations?.length) setShowAnimations(true)
+          }}
+        />
+      )}
+
       {showAnimations && (
         <AnimationLayer animations={event.animations} cores={PALETA_ANIMACAO[tema.id]} />
       )}

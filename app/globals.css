@@ -73,6 +73,84 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
+  /* Chama da vela. O exemplo de referência anima só a escala vertical, e cada
+     camada some em scale(0) no meio do ciclo — o efeito é de pulso, não de
+     fogo. Fogo balança de lado, se alonga e se encolhe, e nunca desaparece:
+     por isso translateX + scaleY, com opacidade nunca chegando a zero. */
+  @keyframes chama-tremor {
+    0%,
+    100% {
+      transform: translateX(0) scale(1, 1);
+      opacity: 1;
+    }
+    22% {
+      transform: translateX(-0.9px) scale(0.94, 1.1);
+      opacity: 0.92;
+    }
+    48% {
+      transform: translateX(0.5px) scale(1.06, 0.93);
+      opacity: 1;
+    }
+    73% {
+      transform: translateX(1px) scale(0.97, 1.05);
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes halo-pulso {
+    0%,
+    100% {
+      opacity: 0.85;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.55;
+      transform: scale(0.86);
+    }
+  }
+
+  .chama,
+  .halo-vela {
+    /* Sem fill-box, um transform em SVG gira em torno da origem do viewBox e a
+       chama sairia voando para fora do bolo. */
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+  /* Durações próximas e defasadas por delay negativo, não durações
+     radicalmente diferentes: assim as três camadas lêem como uma chama só,
+     em vez de três coisas animando lado a lado. */
+  .chama-externa {
+    animation-name: chama-tremor;
+    animation-duration: 1.45s;
+  }
+  .chama-media {
+    animation-name: chama-tremor;
+    animation-duration: 1.1s;
+    animation-delay: -0.35s;
+  }
+  .chama-nucleo {
+    animation-name: chama-tremor;
+    animation-duration: 0.85s;
+    animation-delay: -0.6s;
+  }
+  .halo-vela {
+    transform-origin: 50% 50%;
+    animation-name: halo-pulso;
+    animation-duration: 2.4s;
+  }
+
+  /* CSS não respeita a preferência sozinho, diferente do canvas-confetti. Sem
+     isto, quem pediu menos movimento veria a chama tremendo para sempre. */
+  @media (prefers-reduced-motion: reduce) {
+    .chama,
+    .halo-vela {
+      animation: none;
+    }
+  }
+
   /* Cartões sobre papel: branco puro com sombra dura destoa. Um branco levemente
      quente e uma borda de tom de papel fazem o cartão parecer uma folha por cima
      de outra. */

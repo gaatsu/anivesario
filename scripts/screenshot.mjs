@@ -10,7 +10,15 @@
 //
 // A espera existe para as animações de entrada terminarem: sem ela o
 // screenshot pega tudo no meio do caminho, opaco pela metade.
-import { chromium } from "playwright"
+// Navegador do próprio projeto, em node_modules/playwright-core/.local-browsers.
+//
+// Precisa ser definido antes de o playwright carregar, e `import` estático é
+// içado para antes de qualquer statement — daí o import dinâmico logo abaixo.
+// Sem isto o playwright procuraria no cache do usuário (~/AppData/ms-playwright),
+// que tem builds de outra versão e falha pedindo `playwright install`.
+process.env.PLAYWRIGHT_BROWSERS_PATH = "0"
+
+const { chromium } = await import("playwright")
 
 const [, , url, saida, espera = "3000"] = process.argv
 
@@ -19,10 +27,30 @@ if (!url || !saida) {
   process.exit(1)
 }
 
-// Chrome do sistema em vez do Chromium do Playwright: o pacote espera um build
-// que não está baixado, e `playwright install` puxa de uma CDN que o proxy
-// corporativo bloqueia. O Chrome já está instalado nesta máquina.
-const browser = await chromium.launch({ channel: "chrome" })
+/**
+ * Prefere o navegador baixado pelo projeto; cai no Chrome instalado se o EDR
+ * não deixar executá-lo.
+ *
+ * O bloqueio é real e vale registrar: `playwright install` baixa o binário sem
+ * problema — a CDN passa pelo proxy — mas o antivírus corporativo recusa
+ * executar qualquer .exe recém-baixado, em `node_modules` ou no cache do
+ * usuário, com "Permission denied". É o mesmo motivo pelo qual o `esbuild.exe`
+ * derrubou um `npm install` antes nesta base.
+ *
+ * O Chrome instalado roda porque já está aprovado. Sobe headless e com perfil
+ * temporário, então não encosta no perfil de ninguém.
+ */
+async function abrirNavegador() {
+  try {
+    return await chromium.launch()
+  } catch (erro) {
+    console.warn("navegador do projeto bloqueado, usando o Chrome do sistema")
+    console.warn(" ", String(erro).split("\n")[0])
+    return chromium.launch({ channel: "chrome" })
+  }
+}
+
+const browser = await abrirNavegador()
 const page = await browser.newPage({
   viewport: { width: 1400, height: 900 },
   // 2x para o traço fino do SVG não virar borrão na inspeção.

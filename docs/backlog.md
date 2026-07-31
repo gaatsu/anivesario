@@ -123,6 +123,28 @@ o campo para "Anabelle".
 
 ---
 
+## Como conferir o visual
+
+Nada que toque o banco compila localmente (`prisma generate` bloqueado pelo
+proxy), mas as rotas sob `app/preview/` não importam `lib/db` — e o `next dev`
+serve essas normalmente. Com isso dá para ver o desenho antes de subir:
+
+```
+npx next dev -p 3987
+node scripts/screenshot.mjs http://localhost:3987/preview/abertura saida.png
+```
+
+A rota 404 em produção. Foi assim que se descobriu que o bolo ficou bom e os
+medalhões ficaram visivelmente mais pobres ao lado dele.
+
+**O EDR não deixa rodar navegador baixado.** `playwright install` baixa sem
+problema (a CDN passa pelo proxy), mas executar o .exe resultante dá
+"Permission denied" — tanto em `node_modules` quanto no cache do usuário. É o
+mesmo bloqueio que derrubou o `esbuild.exe` num `npm install`. O script tenta o
+navegador do projeto e cai no Chrome instalado, que roda por já estar aprovado.
+
+---
+
 ## Fora de escopo (decidido)
 
 - Datas comemorativas (Natal, festa junina) como tipo de evento

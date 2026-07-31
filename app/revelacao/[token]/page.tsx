@@ -6,6 +6,7 @@ import { Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import AnimationLayer from "@/components/Animations/AnimationLayer"
 import Abertura from "@/components/Abertura/Abertura"
+import Carrossel from "@/components/Carrossel/Carrossel"
 import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
 
 // sessionStorage é bloqueado em navegação privada e com cookies desativados, e
@@ -46,6 +47,7 @@ interface EventData {
   eventDate: string
   type: string
   animations: string[]
+  photos: string[]
   postits: Postit[]
 }
 
@@ -180,6 +182,11 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
               : `${event.postits.length} recados deixados para você`}
           </p>
         </div>
+
+        {/* Antes dos recados: as fotos são a parte que se olha, os recados a
+            que se lê. Fora do muralRef de propósito — o PDF é dos recados, e
+            html2canvas com imagens remotas mancha a exportação. */}
+        {event.photos?.length > 0 && <Carrossel fotos={event.photos} />}
 
         <div className="flex justify-center">
           <button

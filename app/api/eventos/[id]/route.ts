@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
+import { apagarFotos } from "@/lib/fotos"
 
 export async function DELETE(
   request: NextRequest,
@@ -25,11 +26,14 @@ export async function DELETE(
       return NextResponse.json({ message: "Event not found" }, { status: 404 })
     }
 
-    // Soft delete
+    // Soft delete. As fotos, porém, vão embora agora: um evento excluído nunca
+    // mais é exibido, então segurar os binários até a purga das 12h só ocuparia
+    // storage. Zerar o array evita que a purga tente apagá-los de novo.
     await db.event.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: new Date(), photos: [] },
     })
+    await apagarFotos(event.photos)
 
     return NextResponse.json({ message: "Event deleted" })
   } catch (error) {

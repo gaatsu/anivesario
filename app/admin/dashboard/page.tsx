@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Plus, Calendar, ExternalLink, Pencil, Trash2, Gift, Users, Copy, Check } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
 import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
+import UploadFotos from "@/components/Forms/UploadFotos"
 import { ANIMACOES, TEMAS, TEMA_PADRAO, resolverTema } from "@/lib/themes"
 
 interface Event {
@@ -16,6 +17,7 @@ interface Event {
   eventDate: string
   type: string
   animations: string[]
+  photos: string[]
   shareLink: string
   revealLink: string
   status: string
@@ -51,6 +53,11 @@ export default function DashboardPage() {
   const [showNewEventForm, setShowNewEventForm] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [formData, setFormData] = useState(FORM_VAZIO)
+  // Fotos ficam fora do formData porque não são JSON: as pendentes são File e
+  // sobem em multipart, depois do evento existir e ter id.
+  const [fotosSalvas, setFotosSalvas] = useState<string[]>([])
+  const [fotosPendentes, setFotosPendentes] = useState<File[]>([])
+  const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
     fetchEvents()
@@ -73,6 +80,7 @@ export default function DashboardPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    setSalvando(true)
     try {
       const res = await fetch(
         editandoId ? `/api/eventos/${editandoId}` : "/api/eventos",
@@ -83,18 +91,45 @@ export default function DashboardPage() {
         }
       )
 
-      if (res.ok) {
-        fecharFormulario()
-        fetchEvents()
+      if (!res.ok) return
+
+      // As fotos só sobem depois: o upload é endereçado por id do evento, e na
+      // criação esse id nasce agora, na resposta acima.
+      const salvo = await res.json()
+      const id: string = editandoId ?? salvo.id
+
+      if (fotosPendentes.length) {
+        const corpo = new FormData()
+        for (const arquivo of fotosPendentes) corpo.append("fotos", arquivo)
+        const envio = await fetch(`/api/eventos/${id}/fotos`, { method: "POST", body: corpo })
+        if (!envio.ok) console.error("Falha ao enviar fotos:", await envio.text())
       }
+
+      fecharFormulario()
+      fetchEvents()
     } catch (error) {
       console.error("Error saving event:", error)
+    } finally {
+      setSalvando(false)
     }
+  }
+
+  // Ao editar, remover uma foto já salva vale na hora — não espera o submit.
+  const removerFotoSalva = async (url: string) => {
+    setFotosSalvas((atuais) => atuais.filter((u) => u !== url))
+    if (!editandoId) return
+    await fetch(`/api/eventos/${editandoId}/fotos`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    })
   }
 
   const abrirCriacao = () => {
     setEditandoId(null)
     setFormData(FORM_VAZIO)
+    setFotosSalvas([])
+    setFotosPendentes([])
     setShowNewEventForm(true)
   }
 
@@ -107,6 +142,8 @@ export default function DashboardPage() {
       type: event.type,
       animations: [...(event.animations ?? [])],
     })
+    setFotosSalvas([...(event.photos ?? [])])
+    setFotosPendentes([])
     setShowNewEventForm(true)
   }
 
@@ -114,6 +151,8 @@ export default function DashboardPage() {
     setShowNewEventForm(false)
     setEditandoId(null)
     setFormData(FORM_VAZIO)
+    setFotosSalvas([])
+    setFotosPendentes([])
   }
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -267,9 +306,20 @@ export default function DashboardPage() {
               </p>
             </div>
 
+            <UploadFotos
+              salvas={fotosSalvas}
+              pendentes={fotosPendentes}
+              onPendentesChange={setFotosPendentes}
+              onRemoverSalva={removerFotoSalva}
+            />
+
             <div className="flex gap-4">
-              <Botao type="submit" className="flex-1">
-                {editandoId ? "Salvar alterações" : "Criar Evento"}
+              <Botao type="submit" className="flex-1" disabled={salvando}>
+                {salvando
+                  ? "Salvando..."
+                  : editandoId
+                    ? "Salvar alterações"
+                    : "Criar Evento"}
               </Botao>
               <Botao
                 type="button"

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
 import { v4 as uuid } from "uuid"
-import { EVENT_LIFETIME_MS } from "@/lib/eventLifecycle"
+import { purgarEventosExpirados } from "@/lib/eventLifecycle"
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,13 +12,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Lazily purge this user's expired events before listing
-    await db.event.deleteMany({
-      where: {
-        creatorId: user.id,
-        createdAt: { lt: new Date(Date.now() - EVENT_LIFETIME_MS) },
-      },
-    })
+    // Lazily purge this user's expired events before listing — com as fotos.
+    await purgarEventosExpirados(user.id)
 
     const events = await db.event.findMany({
       where: {

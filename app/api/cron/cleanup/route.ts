@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { EVENT_LIFETIME_MS } from "@/lib/eventLifecycle"
+import { purgarEventosExpirados } from "@/lib/eventLifecycle"
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
@@ -8,11 +7,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
 
-  const result = await db.event.deleteMany({
-    where: {
-      createdAt: { lt: new Date(Date.now() - EVENT_LIFETIME_MS) },
-    },
-  })
+  // Passa pelo helper em vez de deleteMany direto: é aqui que os blobs das
+  // fotos são apagados junto, e um deleteMany solto vazaria storage.
+  const deleted = await purgarEventosExpirados()
 
-  return NextResponse.json({ deleted: result.count })
+  return NextResponse.json({ deleted })
 }

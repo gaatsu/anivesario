@@ -48,6 +48,11 @@ model Event {
 
   animations   String[] @default([])
 
+  // URLs públicas no Vercel Blob. Só as URLs moram aqui; os binários ficam lá.
+  // Como o evento se apaga sozinho em 12h, quem apaga o evento também precisa
+  // apagar os blobs — ver purgarEventos em lib/eventLifecycle.ts.
+  photos       String[] @default([])
+
   postits      Postit[]
   qrCode       QRCode?
 

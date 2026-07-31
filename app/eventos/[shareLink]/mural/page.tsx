@@ -114,6 +114,11 @@ export default function MuralPage() {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
+          {/* Aqui o público são os colegas, não o homenageado: a chamada é um
+              convite a escrever, e não a saudação da revelação. */}
+          <p className="text-apoio font-medium uppercase tracking-wide text-gray-600">
+            {tema.convite}
+          </p>
           {/* Cor sólida do tema em vez do gradiente com bg-clip-text: segue a
               identidade do evento e não tem como renderizar invisível. */}
           <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>

@@ -4,6 +4,15 @@ export interface Tema {
   id: TipoEvento
   label: string
   descricao: string
+  /**
+   * Saudação exibida antes do nome do homenageado. Vem do tema, não do usuário:
+   * quem cria o evento digita só "Maria", e cada tela compõe "Feliz
+   * Aniversário, Maria". Antes o título era texto livre e saía diferente em
+   * cada evento.
+   */
+  saudacao: string
+  /** Chamada do link de coleta, onde o público são os colegas. */
+  convite: string
   /** Grau OKLCH de partida da paleta de postits. */
   matizBase: number
   /** Largura da faixa de matiz, em graus, em torno da base. */
@@ -19,6 +28,8 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     id: "birthday",
     label: "Aniversário",
     descricao: "Comemoração de aniversário",
+    saudacao: "Feliz Aniversário",
+    convite: "Deixe um recado de aniversário para",
     matizBase: 340,
     amplitudeMatiz: 90,
     acento: "#db2777",
@@ -29,6 +40,8 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     id: "farewell",
     label: "Despedida",
     descricao: "Alguém deixando o time",
+    saudacao: "Boa sorte",
+    convite: "Deixe uma mensagem de despedida para",
     matizBase: 250,
     amplitudeMatiz: 70,
     acento: "#4f46e5",
@@ -39,6 +52,8 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     id: "welcome",
     label: "Boas-vindas",
     descricao: "Chegada ao time ou volta de férias",
+    saudacao: "Bem-vindo(a)",
+    convite: "Dê as boas-vindas a",
     matizBase: 150,
     amplitudeMatiz: 80,
     acento: "#059669",
@@ -49,6 +64,8 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     id: "achievement",
     label: "Conquista",
     descricao: "Promoção, formatura, casamento, nascimento",
+    saudacao: "Parabéns",
+    convite: "Parabenize",
     matizBase: 70,
     amplitudeMatiz: 60,
     acento: "#b45309",

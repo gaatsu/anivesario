@@ -121,8 +121,10 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
           {/* Cor sólida do tema em vez do gradiente com bg-clip-text: além de
               seguir a identidade do evento, um título com cor não tem como
               renderizar invisível. */}
+          {/* `title` guarda o nome do homenageado; a saudação vem do tema, para
+              que todo evento do mesmo tipo abra com a mesma frase. */}
           <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>
-            {event.title}
+            {tema.saudacao}, {event.title}!
           </h1>
           {event.description && <p className="text-gray-600">{event.description}</p>}
           <p className="text-sm text-gray-600">

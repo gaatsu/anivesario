@@ -11,6 +11,19 @@ test("os quatro tipos existem com id consistente", () => {
   assert.equal(Object.keys(TEMAS).length, 4)
 })
 
+test("todo tema traz saudação e convite próprios", () => {
+  // O usuário digita só o nome do homenageado; a saudação e o convite vêm daqui.
+  // Se um tema esquecer o campo, a tela mostraria ", Maria" — vazio antes do nome.
+  const saudacoes = new Set<string>()
+  for (const tema of Object.values(TEMAS)) {
+    assert.ok(tema.saudacao.length > 0, `${tema.id} sem saudação`)
+    assert.ok(tema.convite.length > 0, `${tema.id} sem convite`)
+    saudacoes.add(tema.saudacao)
+  }
+  assert.equal(saudacoes.size, 4, "duas saudações iguais tornam os temas indistinguíveis")
+  assert.equal(resolverTema("birthday").saudacao, "Feliz Aniversário")
+})
+
 test("tipo desconhecido cai em birthday", () => {
   assert.equal(resolverTema("nao_existe").id, "birthday")
   assert.equal(resolverTema("").id, "birthday")

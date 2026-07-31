@@ -6,6 +6,14 @@
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 
+  /* Papel. O app é sobre murais de recado, e o slate-50/slate-100 anterior era
+     um cinza de dashboard — frio e sem textura. Três tons quentes do centro
+     para a borda, mais um marrom de tinta para texto sobre papel. */
+  --color-papel-claro: #f8f3e7;
+  --color-papel: #f2ead6;
+  --color-papel-escuro: #e9dec3;
+  --color-tinta: #3b3129;
+
   /* Escala tipográfica nomeada por papel, não por tamanho: antes cada tela
      escolhia text-3xl ou text-xl por conta própria e elas foram divergindo. */
   --text-titulo: 1.875rem;
@@ -31,5 +39,48 @@
   body {
     color: var(--color-foreground);
     font-family: var(--font-sans);
+  }
+}
+
+/* Também em @layer utilities de propósito, pelo mesmo motivo das regras de base
+   acima: CSS sem layer vence CSS em layer, e uma .fundo-papel solta anularia
+   qualquer bg-* do Tailwind aplicado por cima. */
+@layer utilities {
+  .fundo-papel {
+    background-color: var(--color-papel);
+    background-image: radial-gradient(
+      ellipse at 50% 0%,
+      var(--color-papel-claro) 0%,
+      var(--color-papel) 45%,
+      var(--color-papel-escuro) 100%
+    );
+    background-attachment: fixed;
+  }
+
+  /* Grão como pseudo-elemento fixo em vez de background extra: assim o ruído não
+     escala junto com o gradiente nem se repete de forma visível ao rolar.
+     feTurbulence embutido como data-URI — sem requisição, sem arquivo de imagem.
+     mix-blend-mode: multiply escurece só os pontos do ruído, então o grão
+     funciona por cima de qualquer paleta de tema. */
+  .grao::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Cartões sobre papel: branco puro com sombra dura destoa. Um branco levemente
+     quente e uma borda de tom de papel fazem o cartão parecer uma folha por cima
+     de outra. */
+  .cartao-papel {
+    background-color: #fffdf8;
+    border: 1px solid color-mix(in oklab, var(--color-papel-escuro) 80%, #000 6%);
+    box-shadow:
+      0 1px 2px rgb(59 49 41 / 0.06),
+      0 8px 24px -12px rgb(59 49 41 / 0.18);
   }
 }

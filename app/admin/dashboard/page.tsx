@@ -122,16 +122,23 @@ export default function DashboardPage() {
           <form onSubmit={handleCreateEvent} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título
+                Nome do homenageado
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Ex: Aniversário da Maria"
+                placeholder="Ex: Maria"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
+              {/* Só o nome. A saudação vem do tipo do evento — se a pessoa
+                  escrever "Aniversário da Maria" aqui, o mural abre com
+                  "Feliz Aniversário, Aniversário da Maria". */}
+              <p className="text-xs text-gray-600 mt-1">
+                Só o nome. O mural vai abrir com “{resolverTema(formData.type).saudacao},{" "}
+                {formData.title.trim() || "Maria"}”.
+              </p>
             </div>
 
             <div>

@@ -33,7 +33,8 @@ homenageado, edição de evento (`PATCH`), compartilhamento via Web Share API e
 abertura com bolo — vela reescrita em três camadas.
 
 Depois disso, no mesmo dia: carrossel de fotos com Vercel Blob (upload com
-compressão no navegador, limpeza dos blobs em toda rota que apaga evento) e os
+compressão no navegador, limpeza dos blobs em toda rota que apaga evento,
+store **privado** com URL assinada por leitura) e os
 nove templates de post-it de `C:\anivesario\Templates` — fita ou percevejo,
 canto recortado, Caveat/Kalam sorteadas por autor, e texto num tom escuro do
 próprio matiz do papel.

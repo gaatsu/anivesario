@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { comprimirImagem } from "@/lib/comprimir-imagem"
-import { MAX_FOTOS, TIPOS_ACEITOS } from "@/lib/fotos"
+import { MAX_FOTOS, TIPOS_ACEITOS, type FotoAssinada } from "@/lib/fotos"
 
 interface Props {
-  /** URLs já no Blob. Vazio enquanto o evento não existe. */
-  salvas: string[]
+  /** Já no Blob. Vazio enquanto o evento não existe. */
+  salvas: FotoAssinada[]
   /** Escolhidas e ainda não enviadas — sobem quando o evento for salvo. */
   pendentes: File[]
   onPendentesChange: (arquivos: File[]) => void
-  onRemoverSalva: (url: string) => void
+  /** Recebe o pathname, que é a identidade da foto — a URL expira. */
+  onRemoverSalva: (pathname: string) => void
 }
 
 export default function UploadFotos({
@@ -71,8 +72,12 @@ export default function UploadFotos({
       </label>
 
       <div className="flex flex-wrap gap-2">
-        {salvas.map((url) => (
-          <Miniatura key={url} src={url} onRemover={() => onRemoverSalva(url)} />
+        {salvas.map((foto) => (
+          <Miniatura
+            key={foto.pathname}
+            src={foto.url}
+            onRemover={() => onRemoverSalva(foto.pathname)}
+          />
         ))}
 
         {previews.map((src, i) => (

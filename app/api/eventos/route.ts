@@ -3,6 +3,11 @@ import { getCurrentUser } from "@/lib/current-user"
 import { db } from "@/lib/db"
 import { v4 as uuid } from "uuid"
 import { purgarEventosExpirados } from "@/lib/eventLifecycle"
+import { assinarFotos } from "@/lib/fotos"
+
+// O dashboard só mostra miniatura; não precisa de URL válida por 12h como a
+// revelação precisa.
+const UMA_HORA_MS = 60 * 60 * 1000
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +33,22 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(events)
+    // Um token de assinatura para a lista inteira, e não um por evento: a
+    // emissão é a única chamada de rede do processo, e o dashboard costuma
+    // trazer vários eventos de uma vez.
+    type ComFotos = { photos: string[] }
+    const assinadas = await assinarFotos(
+      events.flatMap((e: ComFotos) => e.photos),
+      Date.now() + UMA_HORA_MS
+    )
+    const porCaminho = new Map(assinadas.map((f) => [f.pathname, f]))
+
+    return NextResponse.json(
+      events.map((e: ComFotos) => ({
+        ...e,
+        photos: e.photos.map((p) => porCaminho.get(p)).filter(Boolean),
+      }))
+    )
   } catch (error) {
     console.error("Error fetching events:", error)
     return NextResponse.json(

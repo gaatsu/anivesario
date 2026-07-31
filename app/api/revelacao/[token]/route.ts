@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { deleteEventIfExpired } from "@/lib/eventLifecycle"
+import { deleteEventIfExpired, EVENT_LIFETIME_MS } from "@/lib/eventLifecycle"
+import { assinarFotos } from "@/lib/fotos"
 
 // Mesma leitura pública do mural, mas endereçada pelo revealLink. Fica separada
 // de /api/mural para que o link do homenageado não sirva para escrever recado —
@@ -31,7 +32,15 @@ export async function GET(
       return NextResponse.json({ message: "Event expired" }, { status: 404 })
     }
 
-    return NextResponse.json(event)
+    // As URLs valem até o evento expirar, e não um prazo fixo: o mural morre em
+    // 12h de qualquer forma, então uma assinatura mais longa não serviria a
+    // ninguém, e uma mais curta quebraria as imagens numa aba deixada aberta.
+    const photos = await assinarFotos(
+      event.photos,
+      event.createdAt.getTime() + EVENT_LIFETIME_MS
+    )
+
+    return NextResponse.json({ ...event, photos })
   } catch (error) {
     console.error("Error fetching reveal:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })

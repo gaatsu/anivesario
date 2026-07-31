@@ -9,6 +9,7 @@ import { QRCodeCanvas } from "qrcode.react"
 import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
 import UploadFotos from "@/components/Forms/UploadFotos"
 import { ANIMACOES, TEMAS, TEMA_PADRAO, resolverTema } from "@/lib/themes"
+import type { FotoAssinada } from "@/lib/fotos"
 
 interface Event {
   id: string
@@ -17,7 +18,7 @@ interface Event {
   eventDate: string
   type: string
   animations: string[]
-  photos: string[]
+  photos: FotoAssinada[]
   shareLink: string
   revealLink: string
   status: string
@@ -55,7 +56,7 @@ export default function DashboardPage() {
   const [formData, setFormData] = useState(FORM_VAZIO)
   // Fotos ficam fora do formData porque não são JSON: as pendentes são File e
   // sobem em multipart, depois do evento existir e ter id.
-  const [fotosSalvas, setFotosSalvas] = useState<string[]>([])
+  const [fotosSalvas, setFotosSalvas] = useState<FotoAssinada[]>([])
   const [fotosPendentes, setFotosPendentes] = useState<File[]>([])
   const [salvando, setSalvando] = useState(false)
 
@@ -115,13 +116,13 @@ export default function DashboardPage() {
   }
 
   // Ao editar, remover uma foto já salva vale na hora — não espera o submit.
-  const removerFotoSalva = async (url: string) => {
-    setFotosSalvas((atuais) => atuais.filter((u) => u !== url))
+  const removerFotoSalva = async (pathname: string) => {
+    setFotosSalvas((atuais) => atuais.filter((f) => f.pathname !== pathname))
     if (!editandoId) return
     await fetch(`/api/eventos/${editandoId}/fotos`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ pathname }),
     })
   }
 

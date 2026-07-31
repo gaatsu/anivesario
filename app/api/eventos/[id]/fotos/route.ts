@@ -63,7 +63,9 @@ export async function POST(
     const enviados = await Promise.all(
       arquivos.map((arquivo) =>
         put(`eventos/${id}/${arquivo.name || "foto"}`, arquivo, {
-          access: "public",
+          // Store privado: a URL do blob não abre sozinha. O que fica salvo é o
+          // pathname, e a URL de leitura é assinada na hora de servir.
+          access: "private",
           // Sem sufixo, subir duas fotos com o mesmo nome sobrescreveria a
           // primeira — e "IMG_0001.jpg" repete o tempo todo.
           addRandomSuffix: true,
@@ -74,7 +76,7 @@ export async function POST(
 
     const atualizado = await db.event.update({
       where: { id },
-      data: { photos: [...event.photos, ...enviados.map((b) => b.url)] },
+      data: { photos: [...event.photos, ...enviados.map((b) => b.pathname)] },
       select: { photos: true },
     })
 
@@ -95,20 +97,20 @@ export async function DELETE(
     const { event, erro } = await eventoDoUsuario(id)
     if (erro) return erro
 
-    const { url } = await request.json()
+    const { pathname } = await request.json()
 
     // Só apaga o que pertence a este evento: sem esta checagem a rota viraria um
     // "apague qualquer blob da conta" para quem tem login.
-    if (typeof url !== "string" || !event.photos.includes(url)) {
+    if (typeof pathname !== "string" || !event.photos.includes(pathname)) {
       return NextResponse.json({ message: "Foto não encontrada" }, { status: 404 })
     }
 
     const atualizado = await db.event.update({
       where: { id },
-      data: { photos: event.photos.filter((p: string) => p !== url) },
+      data: { photos: event.photos.filter((p: string) => p !== pathname) },
       select: { photos: true },
     })
-    await apagarFotos([url])
+    await apagarFotos([pathname])
 
     return NextResponse.json(atualizado)
   } catch (error) {

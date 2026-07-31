@@ -8,6 +8,7 @@ import AnimationLayer from "@/components/Animations/AnimationLayer"
 import Abertura from "@/components/Abertura/Abertura"
 import Carrossel from "@/components/Carrossel/Carrossel"
 import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
+import type { FotoAssinada } from "@/lib/fotos"
 
 // sessionStorage é bloqueado em navegação privada e com cookies desativados, e
 // aí lança em vez de retornar null. Falhar para "ainda não viu" é o lado certo
@@ -47,7 +48,7 @@ interface EventData {
   eventDate: string
   type: string
   animations: string[]
-  photos: string[]
+  photos: FotoAssinada[]
   postits: Postit[]
 }
 
@@ -186,7 +187,9 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
         {/* Antes dos recados: as fotos são a parte que se olha, os recados a
             que se lê. Fora do muralRef de propósito — o PDF é dos recados, e
             html2canvas com imagens remotas mancha a exportação. */}
-        {event.photos?.length > 0 && <Carrossel fotos={event.photos} />}
+        {event.photos?.length > 0 && (
+          <Carrossel fotos={event.photos.map((f) => f.url)} />
+        )}
 
         <div className="flex justify-center">
           <button

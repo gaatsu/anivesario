@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus, Calendar, Share2, Trash2, Gift, Copy, Check } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
+import { ANIMACOES, TEMAS, TEMA_PADRAO, resolverTema } from "@/lib/themes"
 
 interface Event {
   id: string
@@ -16,18 +17,22 @@ interface Event {
   createdAt: string
 }
 
+// O formulário já nasce com as animações do tema padrão, para que criar um
+// evento sem mexer em nada ainda produza um mural com identidade.
+const FORM_VAZIO = {
+  title: "",
+  description: "",
+  eventDate: "",
+  type: TEMA_PADRAO as string,
+  animations: [...TEMAS[TEMA_PADRAO].animacoesPadrao] as string[],
+}
+
 export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showNewEventForm, setShowNewEventForm] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    eventDate: "",
-    type: "birthday",
-    animations: [] as string[],
-  })
+  const [formData, setFormData] = useState(FORM_VAZIO)
 
   useEffect(() => {
     fetchEvents()
@@ -56,13 +61,7 @@ export default function DashboardPage() {
       })
 
       if (res.ok) {
-        setFormData({
-          title: "",
-          description: "",
-          eventDate: "",
-          type: "birthday",
-          animations: [],
-        })
+        setFormData(FORM_VAZIO)
         setShowNewEventForm(false)
         fetchEvents()
       }
@@ -80,6 +79,12 @@ export default function DashboardPage() {
         console.error("Error deleting event:", error)
       }
     }
+  }
+
+  // Trocar o tipo repõe as animações daquele tema. É sugestão, não trava: os
+  // checkboxes seguem editáveis logo abaixo.
+  const handleTrocarTipo = (type: string) => {
+    setFormData({ ...formData, type, animations: [...resolverTema(type).animacoesPadrao] })
   }
 
   const getShareUrl = (shareLink: string) =>
@@ -162,13 +167,16 @@ export default function DashboardPage() {
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  onChange={(e) => handleTrocarTipo(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="birthday">Aniversário</option>
-                  <option value="vacation">Férias</option>
-                  <option value="custom">Customizado</option>
+                  {Object.values(TEMAS).map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
                 </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  {resolverTema(formData.type).descricao}
+                </p>
               </div>
             </div>
 
@@ -177,30 +185,34 @@ export default function DashboardPage() {
                 Animações
               </label>
               <div className="space-y-2">
-                {["confetti", "balloons", "fireworks", "confetti_paper"].map((anim) => (
-                  <label key={anim} className="flex items-center gap-2">
+                {ANIMACOES.map((anim) => (
+                  <label
+                    key={anim.id}
+                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
                     <input
                       type="checkbox"
-                      checked={formData.animations.includes(anim)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({
-                            ...formData,
-                            animations: [...formData.animations, anim],
-                          })
-                        } else {
-                          setFormData({
-                            ...formData,
-                            animations: formData.animations.filter((a) => a !== anim),
-                          })
-                        }
-                      }}
-                      className="w-4 h-4"
+                      checked={formData.animations.includes(anim.id)}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          animations: e.target.checked
+                            ? [...formData.animations, anim.id]
+                            : formData.animations.filter((a) => a !== anim.id),
+                        })
+                      }
+                      className="w-4 h-4 mt-0.5"
                     />
-                    <span className="text-sm capitalize">{anim.replace("_", " ")}</span>
+                    <span>
+                      <span className="block text-sm font-medium text-gray-900">{anim.label}</span>
+                      <span className="block text-xs text-gray-600">{anim.descricao}</span>
+                    </span>
                   </label>
                 ))}
               </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Só tocam no link da surpresa, nunca no link de coleta.
+              </p>
             </div>
 
             <div className="flex gap-4">

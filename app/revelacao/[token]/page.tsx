@@ -1,5 +1,6 @@
 "use client"
 
+import EstadoVazio from "@/components/ui/EstadoVazio"
 import { use, useCallback, useEffect, useRef, useState } from "react"
 import { Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
@@ -144,13 +145,11 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
 
         <div ref={muralRef}>
           {event.postits.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-lg p-16 text-center">
-              <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Ainda não há recados
-              </h2>
-              <p className="text-gray-600">Volte daqui a pouco.</p>
-            </div>
+            <EstadoVazio
+              Icone={PartyPopper}
+              titulo="Ainda não há recados"
+              descricao="Volte daqui a pouco."
+            />
           ) : (
             <MuralCanvas postits={event.postits} readOnly tema={tema} />
           )}

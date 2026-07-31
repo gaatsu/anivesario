@@ -1,5 +1,7 @@
 "use client"
 
+import Botao from "@/components/ui/Botao"
+import EstadoVazio from "@/components/ui/EstadoVazio"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus, Calendar, Share2, Trash2, Gift, Copy, Check } from "lucide-react"
@@ -107,13 +109,10 @@ export default function DashboardPage() {
           <p className="text-gray-600 mt-1">Crie e gerencie seus murais de recados</p>
         </div>
 
-        <button
-          onClick={() => setShowNewEventForm(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold hover:shadow-lg transition"
-        >
+        <Botao onClick={() => setShowNewEventForm(true)}>
           <Plus className="w-5 h-5" />
           Novo Evento
-        </button>
+        </Botao>
       </div>
 
       {showNewEventForm && (
@@ -216,19 +215,17 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                className="flex-1 px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
-              >
+              <Botao type="submit" className="flex-1">
                 Criar Evento
-              </button>
-              <button
+              </Botao>
+              <Botao
                 type="button"
+                variante="secundario"
                 onClick={() => setShowNewEventForm(false)}
-                className="flex-1 px-6 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                className="flex-1"
               >
                 Cancelar
-              </button>
+              </Botao>
             </div>
           </form>
         </div>
@@ -239,13 +236,11 @@ export default function DashboardPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
         </div>
       ) : events.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-          <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Nenhum evento criado ainda
-          </h2>
-          <p className="text-gray-600">Clique em "Novo Evento" para começar</p>
-        </div>
+        <EstadoVazio
+          Icone={Calendar}
+          titulo="Nenhum evento criado ainda"
+          descricao="Clique em Novo Evento para começar"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (

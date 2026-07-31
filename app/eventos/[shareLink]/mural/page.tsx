@@ -1,5 +1,6 @@
 "use client"
 
+import EstadoVazio from "@/components/ui/EstadoVazio"
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { Plus, Download, PartyPopper } from "lucide-react"
@@ -144,13 +145,11 @@ export default function MuralPage() {
 
         <div ref={muralRef}>
           {event.postits.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-lg p-16 text-center">
-              <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Nenhum recado ainda
-              </h2>
-              <p className="text-gray-600">Seja o primeiro a deixar uma mensagem!</p>
-            </div>
+            <EstadoVazio
+              Icone={PartyPopper}
+              titulo="Nenhum recado ainda"
+              descricao="Seja o primeiro a deixar uma mensagem!"
+            />
           ) : (
             <MuralCanvas
               shareLink={shareLink}

@@ -1,5 +1,7 @@
 "use client"
 
+import Botao from "@/components/ui/Botao"
+import EstadoVazio from "@/components/ui/EstadoVazio"
 import { useCallback, useEffect, useState } from "react"
 import { Plus, Trash2, Users, Copy, Check } from "lucide-react"
 
@@ -103,13 +105,10 @@ export default function DelegadosPage() {
           <p className="text-gray-600 mt-1">Gere um link de convite para outro administrador</p>
         </div>
 
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold hover:shadow-lg transition"
-        >
+        <Botao onClick={() => setShowForm(true)}>
           <Plus className="w-5 h-5" />
           Gerar link de convite
-        </button>
+        </Botao>
       </div>
 
       {novoLink && (
@@ -167,19 +166,12 @@ export default function DelegadosPage() {
             </div>
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                className="flex-1 px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
-              >
+              <Botao type="submit" className="flex-1">
                 Gerar link
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 px-6 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
-              >
+              </Botao>
+              <Botao type="button" variante="secundario" onClick={() => setShowForm(false)} className="flex-1">
                 Cancelar
-              </button>
+              </Botao>
             </div>
           </form>
         </div>
@@ -190,13 +182,11 @@ export default function DelegadosPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
         </div>
       ) : delegates.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Nenhum convite gerado
-          </h2>
-          <p className="text-gray-600">Gere um link para alguém ajudar a gerenciar seus eventos</p>
-        </div>
+        <EstadoVazio
+          Icone={Users}
+          titulo="Nenhum convite gerado"
+          descricao="Gere um link para alguém ajudar a gerenciar seus eventos"
+        />
       ) : (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <table className="w-full">

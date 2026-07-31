@@ -99,7 +99,7 @@ não arquitetura:
 | Duração da celebração (2500ms) | `components/Animations/tipos.ts` | Pode ser curta demais |
 | Intensidade do ambiente (0.1) | `components/Animations/AnimationLayer.tsx` | |
 | Opacidade do canvas (80% / 30%) | `components/Animations/AnimationLayer.tsx` | Recém-alterada, não validada |
-| Duração dos balões (7–12s) | `components/Animations/BalloonsAnimation.tsx` | **Provavelmente lenta demais** — o confetti dura 3s, e balões podem passar despercebidos |
+| Duração dos balões (5–9s) | `lib/balao.ts` | Reduzida de 7–12s junto com a correção da opacidade |
 
 ### Eventos já gravados com o título antigo
 
@@ -111,8 +111,12 @@ o campo para "Anabelle".
 
 ### Pendências de verificação
 
-- **Balões subindo:** corrigidos em `77c9ba5` (eram destruídos aos 2,5s ao trocar
-  de fase) e trazidos para frente do conteúdo. **Não confirmado pelo usuário.**
+- **Balões subindo:** causa raiz encontrada em `9cf8ed2` — no framer-motion um
+  override por propriedade **substitui** o transition raiz em vez de herdá-lo
+  (`resolveTransition` só mescla com `inherit: true`), então `opacity: { times }`
+  rodava em ~0,3s e zerava o balão antes de ele entrar na tela. As duas correções
+  anteriores (`77c9ba5` z-index, `c27892a` lista) não tocavam opacidade e por isso
+  não resolveram. **Não confirmado pelo usuário.**
 - **Animações no celular:** hipótese é que o canvas a `-z-10` ficava atrás do card,
   que no celular ocupa a largura toda. Corrigido em `c27892a` trazendo o canvas
   para `z-20`. **Não confirmado.**

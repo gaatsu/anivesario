@@ -11,60 +11,97 @@ interface Props {
   className?: string
 }
 
+type Estado = "parado" | "copiado" | "abrindo"
+
 /**
- * Compartilhamento em três degraus, do melhor para o pior:
+ * Compartilhamento em dois degraus, nenhum deles passando pelo navegador:
  *
- * 1. `navigator.share` — abre a folha nativa do sistema, onde o WhatsApp aparece
- *    junto com todo o resto. É o único caminho que **não** passa pelo WhatsApp
- *    Web no desktop, que era exatamente a reclamação.
- * 2. `wa.me` — abre o app no celular, o WhatsApp Web no desktop.
- * 3. Área de transferência — quando o navegador bloqueia a janela nova.
+ * 1. `navigator.share` — folha nativa do sistema, com o WhatsApp entre as
+ *    opções. É o caminho no celular.
+ * 2. `whatsapp://send` — o protocolo do app instalado. No Windows abre o
+ *    WhatsApp Desktop diretamente.
  *
- * O degrau 1 não existe no Firefox desktop, daí a cadeia.
+ * **`wa.me` foi removido de propósito.** Era o fallback anterior e é uma
+ * armadilha: no desktop ele sempre cai no `web.whatsapp.com`, que num proxy
+ * corporativo é uma página bloqueada. Trocava "não consigo compartilhar" por
+ * "compartilhei e deu erro", que é pior.
+ *
+ * O link vai para a área de transferência **junto** com a tentativa de abrir o
+ * app. Não existe forma confiável de detectar se um protocolo customizado foi
+ * atendido, então em vez de adivinhar, o caminho manual fica pronto: se o
+ * WhatsApp não abrir, o link já está copiado e é só colar.
  */
 export default function BotaoCompartilhar({ url, texto, rotulo, className = "" }: Props) {
-  const [copiado, setCopiado] = useState(false)
+  const [estado, setEstado] = useState<Estado>("parado")
+
+  const sinalizar = (novo: Estado) => {
+    setEstado(novo)
+    setTimeout(() => setEstado("parado"), 2500)
+  }
 
   const compartilhar = async () => {
     // Detectado no clique, não no render: o servidor não tem `navigator`, e
-    // qualquer decisão de layout tomada por ele faria o HTML do servidor
-    // divergir do cliente na hidratação. O botão é o mesmo nos três degraus.
+    // decidir o layout por ele faria o HTML divergir na hidratação.
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ title: "Mensagens Corp.", text: texto, url })
         return
       } catch (err) {
-        // Fechar a folha de compartilhamento dispara AbortError. Cair no
-        // fallback aqui abriria o WhatsApp Web logo depois de a pessoa ter
-        // desistido — o comportamento mais irritante possível.
+        // Fechar a folha dispara AbortError. Seguir para o fallback aqui abriria
+        // o WhatsApp logo depois de a pessoa ter desistido.
         if (err instanceof Error && err.name === "AbortError") return
       }
     }
 
-    const wa = `https://wa.me/?text=${encodeURIComponent(`${texto}\n${url}`)}`
-    if (!window.open(wa, "_blank", "noopener,noreferrer")) {
-      await navigator.clipboard.writeText(url)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2000)
+    try {
+      await navigator.clipboard.writeText(`${texto}\n${url}`)
+      sinalizar("abrindo")
+    } catch {
+      sinalizar("abrindo")
     }
+
+    // Protocolo nativo. Se não houver aplicativo registrado, o navegador
+    // simplesmente não faz nada — a página continua aqui e o link está copiado.
+    window.location.href = `whatsapp://send?text=${encodeURIComponent(`${texto}\n${url}`)}`
+  }
+
+  const copiar = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await navigator.clipboard.writeText(url)
+    sinalizar("copiado")
   }
 
   return (
-    <button
-      type="button"
-      onClick={compartilhar}
-      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition text-sm font-medium ${className}`}
-    >
-      {copiado ? (
-        <>
-          <Check className="w-4 h-4" /> Link copiado
-        </>
-      ) : (
-        <>
-          <Share2 className="w-4 h-4" />
-          {rotulo}
-        </>
-      )}
-    </button>
+    <div className="flex gap-1">
+      <button
+        type="button"
+        onClick={compartilhar}
+        className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${className}`}
+      >
+        {estado === "abrindo" ? (
+          <>
+            <Check className="h-4 w-4" /> Copiado, abrindo o WhatsApp
+          </>
+        ) : (
+          <>
+            <Share2 className="h-4 w-4" />
+            {rotulo}
+          </>
+        )}
+      </button>
+
+      {/* Escape explícito para quando o app não estiver instalado. Copiar é a
+          única ação que funciona em qualquer máquina, então merece um botão
+          próprio em vez de ficar escondida atrás de um clique com o direito. */}
+      <button
+        type="button"
+        onClick={copiar}
+        title="Copiar só o link"
+        aria-label="Copiar só o link"
+        className={`rounded-lg px-2.5 py-2 text-sm transition ${className}`}
+      >
+        {estado === "copiado" ? <Check className="h-4 w-4" /> : "Copiar"}
+      </button>
+    </div>
   )
 }

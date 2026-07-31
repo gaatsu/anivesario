@@ -4,7 +4,7 @@ import Botao from "@/components/ui/Botao"
 import EstadoVazio from "@/components/ui/EstadoVazio"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus, Calendar, ExternalLink, Pencil, Trash2, Gift, Users, Copy, Check } from "lucide-react"
+import { Plus, Calendar, ExternalLink, Pencil, Trash2, Gift, Users } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
 import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
 import UploadFotos from "@/components/Forms/UploadFotos"
@@ -49,7 +49,6 @@ const FORM_VAZIO = {
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([])
-  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showNewEventForm, setShowNewEventForm] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -178,12 +177,6 @@ export default function DashboardPage() {
 
   const getRevealUrl = (revealLink: string) =>
     `${window.location.origin}/revelacao/${revealLink}`
-
-  const handleCopyReveal = async (revealLink: string) => {
-    await navigator.clipboard.writeText(getRevealUrl(revealLink))
-    setCopiedId(revealLink)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
 
   return (
     <div className="p-8">
@@ -422,16 +415,6 @@ export default function DashboardPage() {
                     rotulo="Enviar a surpresa"
                     className="w-full bg-pink-600 text-white hover:bg-pink-700"
                   />
-                  <button
-                    onClick={() => handleCopyReveal(event.revealLink)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-pink-700 hover:bg-pink-100 rounded-lg transition text-xs font-medium"
-                  >
-                    {copiedId === event.revealLink ? (
-                      <><Check className="w-4 h-4" /> Copiado</>
-                    ) : (
-                      <><Copy className="w-4 h-4" /> Copiar link</>
-                    )}
-                  </button>
                 </div>
 
                 <div className="flex gap-2">

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { Plus, Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import PostitForm from "@/components/Forms/PostitForm"
+import { resolverTema } from "@/lib/themes"
 
 interface Postit {
   id: string
@@ -21,6 +22,7 @@ interface EventData {
   title: string
   description?: string
   eventDate: string
+  type: string
   animations: string[]
   postits: Postit[]
 }
@@ -105,13 +107,15 @@ export default function MuralPage() {
     )
   }
 
+  const tema = resolverTema(event.type)
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          {/* bg-pink-600 é fallback: sem uma cor de fundo por baixo, se o
-              gradiente não pintar o título some por completo. */}
-          <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+          {/* Cor sólida do tema em vez do gradiente com bg-clip-text: segue a
+              identidade do evento e não tem como renderizar invisível. */}
+          <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>
             {event.title}
           </h1>
           {event.description && (
@@ -152,6 +156,7 @@ export default function MuralPage() {
               shareLink={shareLink}
               postits={event.postits}
               onPositionsChange={() => {}}
+              tema={tema}
             />
           )}
         </div>
@@ -162,6 +167,7 @@ export default function MuralPage() {
           shareLink={shareLink}
           onSuccess={handlePostitSuccess}
           onCancel={() => setShowForm(false)}
+          tema={tema}
         />
       )}
     </div>

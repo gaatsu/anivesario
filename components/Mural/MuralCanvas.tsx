@@ -3,6 +3,7 @@
 import { DndContext, type DragEndEvent } from "@dnd-kit/core"
 import { useEffect, useState } from "react"
 import PostitCard from "./PostitCard"
+import type { Tema } from "@/lib/themes"
 
 interface Postit {
   id: string
@@ -21,6 +22,7 @@ interface MuralCanvasProps {
   onPositionsChange?: (postits: Postit[]) => void
   /** Link de revelação: o homenageado vê o mural, mas não reorganiza nada. */
   readOnly?: boolean
+  tema: Tema
 }
 
 export default function MuralCanvas({
@@ -28,6 +30,7 @@ export default function MuralCanvas({
   postits,
   onPositionsChange,
   readOnly = false,
+  tema,
 }: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
 
@@ -80,6 +83,7 @@ export default function MuralCanvas({
             positionX={postit.positionX}
             positionY={postit.positionY}
             disabled={readOnly}
+            tema={tema}
           />
         ))}
       </div>

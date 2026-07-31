@@ -105,22 +105,22 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
     )
   }
 
+  const tema = resolverTema(event.type)
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       {showAnimations && (
-        <AnimationLayer
-          animations={event.animations}
-          cores={PALETA_ANIMACAO[resolverTema(event.type).id]}
-        />
+        <AnimationLayer animations={event.animations} cores={PALETA_ANIMACAO[tema.id]} />
       )}
 
       {/* relative z-0 dá contexto de empilhamento próprio: o canvas usa -z-10, e
           sem isto a ordem dependeria do DOM em vez de ser explícita. */}
       <div className="relative z-0 max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          {/* bg-pink-600 é fallback: sem cor de fundo por baixo, se o gradiente
-              não pintar o título some por completo. */}
-          <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+          {/* Cor sólida do tema em vez do gradiente com bg-clip-text: além de
+              seguir a identidade do evento, um título com cor não tem como
+              renderizar invisível. */}
+          <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>
             {event.title}
           </h1>
           {event.description && <p className="text-gray-600">{event.description}</p>}
@@ -152,7 +152,7 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
               <p className="text-gray-600">Volte daqui a pouco.</p>
             </div>
           ) : (
-            <MuralCanvas postits={event.postits} readOnly />
+            <MuralCanvas postits={event.postits} readOnly tema={tema} />
           )}
         </div>
       </div>

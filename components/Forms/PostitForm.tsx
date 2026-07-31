@@ -1,33 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { Heart, Star, Cake, Gift, Sparkles, Laugh, Music, Sun, Moon, Flame, Zap, X } from "lucide-react"
+import * as Icons from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { X } from "lucide-react"
 import { POSTIT_COLORS } from "@/lib/utils"
-
-const ICON_OPTIONS = [
-  { name: "Heart", Component: Heart },
-  { name: "Star", Component: Star },
-  { name: "Cake", Component: Cake },
-  { name: "Gift", Component: Gift },
-  { name: "Sparkles", Component: Sparkles },
-  { name: "Laugh", Component: Laugh },
-  { name: "Music", Component: Music },
-  { name: "Sun", Component: Sun },
-  { name: "Moon", Component: Moon },
-  { name: "Flame", Component: Flame },
-  { name: "Zap", Component: Zap },
-]
+import type { Tema } from "@/lib/themes"
+import { corDoPostit } from "@/lib/postit-visual"
 
 interface PostitFormProps {
   shareLink: string
   onSuccess: () => void
   onCancel: () => void
+  tema: Tema
 }
 
-export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFormProps) {
+export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: PostitFormProps) {
   const [name, setName] = useState("")
   const [message, setMessage] = useState("")
-  const [color, setColor] = useState(POSTIT_COLORS[0].hex)
+  // Vazio = automático: o postit ganha a cor do tema derivada do nome. Começar
+  // numa cor fixa faria todo recado parecer escolhido à mão e a paleta
+  // procedural nunca apareceria.
+  const [color, setColor] = useState("")
   const [icon, setIcon] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -118,6 +112,15 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
               Cor do postit
             </label>
             <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setColor("")}
+                className={`w-10 h-10 rounded-full border-2 transition ${
+                  color === "" ? "border-gray-800 scale-110" : "border-gray-300"
+                }`}
+                style={{ backgroundColor: corDoPostit(name, tema) }}
+                title="Automática (combina com o evento)"
+              />
               {POSTIT_COLORS.map((c) => (
                 <button
                   key={c.hex}
@@ -131,6 +134,9 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
                 />
               ))}
             </div>
+            <p className="text-xs text-gray-600 mt-1">
+              A primeira combina com o evento e muda conforme o seu nome.
+            </p>
           </div>
 
           <div>
@@ -147,7 +153,12 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
               >
                 Nenhum
               </button>
-              {ICON_OPTIONS.map(({ name: iconName, Component }) => (
+              {/* Ícones sugeridos pelo tema do evento: bolo e presente num
+                  aniversário, sol e coração numa despedida. */}
+              {tema.icones.map((iconName) => {
+                const Component = (Icons as unknown as Record<string, LucideIcon>)[iconName]
+                if (!Component) return null
+                return (
                 <button
                   key={iconName}
                   type="button"
@@ -159,7 +170,8 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
                 >
                   <Component className="w-5 h-5 text-gray-700" />
                 </button>
-              ))}
+                )
+              })}
             </div>
           </div>
 

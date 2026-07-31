@@ -38,7 +38,10 @@ export async function POST(
         eventId: event.id,
         name: name.slice(0, 100),
         message: message.slice(0, 500),
-        color: color || "#FEF08A",
+        // Vazio significa "automático": o postit herda a cor do tema do evento,
+        // derivada do nome de quem escreveu. Só uma cor escolhida à mão no
+        // formulário chega aqui preenchida.
+        color: typeof color === "string" ? color.trim() : "",
         icon: icon || null,
         positionX: positionX ?? Math.random() * 600,
         positionY: positionY ?? Math.random() * 400,

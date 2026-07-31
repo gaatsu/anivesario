@@ -62,12 +62,25 @@ vela em CSS entrando aos 6s e chamas aos 6,5s. Zero JavaScript.
 - **Encurtar para ~4s.** O original leva ~7s antes de mostrar qualquer coisa, o
   que é muito para uma porta de entrada. O confetti começa junto do fade.
 
-**Bloqueia esta feature:**
-- **Falta o campo `honoreeName` no `Event`.** Hoje só existe `title`, que é texto
-  livre — os eventos atuais são "Alan" e "Aniversário Anabelle". Deduzir o nome do
-  título quebra na primeira vez que alguém escrever diferente. Precisa de campo
-  novo no schema e no formulário. **É migration**, ao contrário das outras
-  features do backlog.
+**O nome vem do campo de criação — sem migration.** Em vez de um `honoreeName`
+novo, o campo `title` que já existe passa a ser **o nome do homenageado**:
+
+- Rótulo muda de "Título" para **"Nome do homenageado"**, e o placeholder de
+  `"Ex: Aniversário da Maria"` para `"Ex: Maria"`. Hoje o placeholder induz
+  exatamente o formato errado — com ele, a abertura diria "Feliz Aniversário,
+  Aniversário da Maria".
+- A **saudação vem do tema**, não do usuário: `Tema` ganha um campo `saudacao`
+  ("Feliz Aniversário", "Boa sorte", "Bem-vindo(a)", "Parabéns"), composto com o
+  nome tanto na abertura quanto no título do mural. Isso também resolve o
+  cabeçalho do mural, que hoje é texto livre e fica inconsistente entre eventos.
+
+**Consequência a resolver:** **não existe edição de evento.**
+`app/api/eventos/[id]/route.ts` só tem `GET` e `DELETE`. Quem digitar o nome
+errado precisa apagar o evento — e perde os recados junto. Com o campo virando
+"nome", errar fica mais provável e mais visível. Ver *Editar evento* abaixo.
+
+Os eventos já gravados ("Aniversário Anabelle" e quatro de teste) vão exibir a
+saudação duplicada até serem recriados ou editados.
 
 **Cuidados:**
 - **SMIL não respeita `prefers-reduced-motion`**, diferente do `canvas-confetti`.
@@ -184,6 +197,47 @@ aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fix
 
 **Um mural com 30 recados deveria estourar mais que um com 2.** Barato de fazer e
 dá significado à animação.
+
+### Compartilhar no WhatsApp sem abrir o WhatsApp Web
+
+Hoje o dashboard só copia o link para a área de transferência; colar no WhatsApp é
+manual, e no desktop qualquer link `wa.me` cai no WhatsApp Web.
+
+**Solução: Web Share API** (`navigator.share`). Abre a folha de compartilhamento
+nativa do sistema, onde o WhatsApp aparece como opção — um toque, sem passar por
+navegador nenhum. É o comportamento nativo, não uma gambiarra de URL.
+
+```
+navigator.share({
+  title: "Mensagens Corp.",
+  text: "Deixe um recado para a Maria",
+  url: "<link de coleta ou da surpresa>",
+})
+```
+
+Requisitos e limites:
+- Exige **HTTPS** e um **gesto do usuário** (clique) — ambos já satisfeitos
+- Suporte: Chrome e Safari no celular (o caso principal), Chrome/Edge no Windows,
+  Safari no macOS. **Firefox desktop não suporta**
+- Cadeia de fallback: `navigator.share` → link `wa.me/?text=` → copiar para a área
+  de transferência (o que já existe hoje)
+
+**Cuidado que importa neste app:** são dois links com públicos opostos. O texto
+compartilhado precisa deixar explícito qual está indo — mandar o link da surpresa
+para o grupo dos colegas estraga tudo. O botão de compartilhar deve existir
+separado em cada um, com texto próprio.
+
+### Editar evento
+
+Hoje `app/api/eventos/[id]/route.ts` expõe só `GET` e `DELETE`: um evento criado
+com dado errado só pode ser apagado, levando os recados junto.
+
+Isso passa a incomodar bem mais quando o título virar **o nome do homenageado** —
+errar o nome de alguém e não poder corrigir sem destruir os recados que os colegas
+já deixaram é o pior tipo de erro possível neste app.
+
+Escopo mínimo: `PATCH` para nome, descrição, data e tipo, com um formulário de
+edição no card do dashboard. Não precisa mexer em links nem em animações.
 
 ### Vibração no celular (haptics)
 

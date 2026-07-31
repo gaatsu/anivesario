@@ -27,7 +27,7 @@ então os deploys dele são de produção, não preview. Duas causas possíveis:
 
 ## Features
 
-### 0. Fundo com textura de papel
+### Fundo com textura de papel
 
 **Independente de tudo o mais e barato.** Hoje o fundo é `slate-50`/`slate-100`,
 frio e sem textura, o que destoa de um app sobre murais de recado.
@@ -44,7 +44,58 @@ próprio fundo e o grão unifica visualmente.
 **A decidir:** o fundo de papel vale para a moldura sóbria (admin/login) também,
 ou só para as telas de mural?
 
-### 1. Carrossel de fotos na revelação
+### Abertura com bolo antes da revelação
+
+Uma tela de abertura antes do mural: saudação + nome do homenageado, com uma peça
+animada ao centro, e fade para os postits, o carrossel e os efeitos.
+
+Referência: `C:\anivesario\Bolo\` — bolo em **SVG puro com animação SMIL** (tags
+`<animate>` encadeadas por `begin="id.end"`, desenhando o bolo camada por camada),
+vela em CSS entrando aos 6s e chamas aos 6,5s. Zero JavaScript.
+
+**Decidido:**
+- **Estrutura comum, centro por tema.** Um componente de abertura com saudação +
+  nome, e no centro uma peça por tema. Começa com o bolo no aniversário; os outros
+  três mostram só a tipografia com a cor do tema até ganharem peça própria.
+- **Só na primeira visita** (`sessionStorage`). Quem recarregar cai direto no
+  mural — a surpresa acontece uma vez.
+- **Encurtar para ~4s.** O original leva ~7s antes de mostrar qualquer coisa, o
+  que é muito para uma porta de entrada. O confetti começa junto do fade.
+
+**Bloqueia esta feature:**
+- **Falta o campo `honoreeName` no `Event`.** Hoje só existe `title`, que é texto
+  livre — os eventos atuais são "Alan" e "Aniversário Anabelle". Deduzir o nome do
+  título quebra na primeira vez que alguém escrever diferente. Precisa de campo
+  novo no schema e no formulário. **É migration**, ao contrário das outras
+  features do backlog.
+
+**Cuidados:**
+- **SMIL não respeita `prefers-reduced-motion`**, diferente do `canvas-confetti`.
+  Tratar à mão, ou a abertura vira uma tela travada de 4s para quem pediu menos
+  movimento.
+- Precisa ser pulável mesmo aparecendo uma vez só.
+
+#### Melhorar a vela
+
+O autor do exemplo registrou no `main.js` que não ficou satisfeito com a vela, e
+com razão. Hoje as 5 chamas (`.fuego`) estão **na mesma posição**, são círculos
+perfeitos (`border-radius: 100%`) e diferem só na duração; cada uma vai a
+`scale(0)` no meio do ciclo, sumindo por completo. O resultado é um blob pulsando.
+
+Melhorias, todas em CSS puro:
+
+- **Forma de gota** em vez de círculo: `border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%`
+- **Três camadas sobrepostas** — externa laranja difusa, média amarela, núcleo
+  branco-azulado — em vez de 5 círculos idênticos
+- **Oscilação lateral + alongamento** (`translateX` mínimo e `scaleY`): chama de
+  verdade balança, a atual só pulsa na vertical
+- **Defasagem por `animation-delay`**, não por durações radicalmente diferentes,
+  para as camadas lerem como uma chama só
+- **Pavio** — retângulo escuro no topo da vela, hoje inexistente
+- **Brilho pulsante no bolo** — `radial-gradient` sob a chama, simulando a luz
+  lançada
+
+### Carrossel de fotos na revelação
 
 Cards de foto espalhados, cada um com posição e rotação próprias. **Não é um
 carrossel de slides** — é uma composição com quatro comportamentos: entrada
@@ -72,7 +123,7 @@ Referência: `C:\anivesario\Carrossel Example\` (`.cards-row` / `.card`).
   apagadas junto, no `deleteEventIfExpired` e no cron, senão vaza storage. É o
   ponto mais fácil de esquecer.
 
-### 2. Formatos de postit (maior impacto visual)
+### Formatos de postit (maior impacto visual)
 
 Hoje há três texturas procedurais (`liso`, `listrado`, `pontilhado`) em
 `lib/postit-visual.ts`, todas sutis demais para se notar. Trocar por **formatos**,
@@ -95,7 +146,7 @@ Tudo em CSS, sem imagem e sem requisição. Referências:
 **A decidir:** os formatos são sorteados por autor (como cor e inclinação) ou
 definidos pelo tema do evento?
 
-### 3. Fontes de caligrafia nos recados
+### Fontes de caligrafia nos recados
 
 Sortear entre 2–3 fontes manuscritas **pelo hash do nome do autor**, para que cada
 recado pareça escrito por uma pessoa diferente — que é literalmente o caso. A
@@ -114,7 +165,7 @@ Todas no Google Fonts, compatíveis com `next/font`. Referências:
 **Atenção:** cada fonte extra pesa no bundle e no tempo de build. Avaliar se 3
 fontes se justificam ou se 2 bastam.
 
-### 4. Revelação em cascata
+### Revelação em cascata
 
 Hoje, ao abrir o link da surpresa, os postits **já estão lá** e a animação é a
 única coisa que acontece. Fazê-los aparecer **um a um**, em sequência, transforma
@@ -126,7 +177,7 @@ em vez de todos de uma vez ([Duolingo streak animation](https://blog.duolingo.co
 **Cuidado:** com 30 recados, uma cascata lenta vira espera. Precisa de teto de
 duração total.
 
-### 5. Intensidade escalonada por volume de recados
+### Intensidade escalonada por volume de recados
 
 A recomendação corrente é intensidade em camadas — conquistas pequenas merecem
 aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fixa.
@@ -134,13 +185,13 @@ aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fix
 **Um mural com 30 recados deveria estourar mais que um com 2.** Barato de fazer e
 dá significado à animação.
 
-### 6. Vibração no celular (haptics)
+### Vibração no celular (haptics)
 
 `navigator.vibrate()` na abertura da revelação, como complemento — e como
 alternativa para quem está com movimento reduzido, já que haptics podem substituir
 feedback visual.
 
-### 7. Fallback estático sob `prefers-reduced-motion`
+### Fallback estático sob `prefers-reduced-motion`
 
 **Motivado por problema real.** Hoje suprimimos 100% das animações sob
 `prefers-reduced-motion`, e isso mordeu duas vezes durante os testes: o Windows do

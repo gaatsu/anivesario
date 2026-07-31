@@ -4,8 +4,12 @@ import { TEMAS } from "./themes.ts"
 import {
   hashNome,
   corDoPostit,
+  corDoTextoPostit,
+  matizDoPostit,
   inclinacaoDoPostit,
-  texturaDoPostit,
+  formatoDoPostit,
+  fonteDoPostit,
+  larguraDoPostit,
 } from "./postit-visual.ts"
 
 const NOMES = ["Ana", "Bruno", "Carla", "Diego", "Alan", "Maria Fernanda", "José"]
@@ -62,16 +66,42 @@ test("inclinação varia entre nomes", () => {
   assert.ok(new Set(NOMES.map(inclinacaoDoPostit)).size > 1)
 })
 
-test("textura é determinística e uma das três", () => {
+test("formato, fonte e largura são determinísticos e válidos", () => {
   for (const n of NOMES) {
-    const t = texturaDoPostit(n)
-    assert.equal(t, texturaDoPostit(n))
-    assert.ok(["liso", "listrado", "pontilhado"].includes(t))
+    assert.equal(formatoDoPostit(n), formatoDoPostit(n))
+    assert.ok(["fita", "percevejo"].includes(formatoDoPostit(n)))
+
+    assert.equal(fonteDoPostit(n), fonteDoPostit(n))
+    assert.ok(["caveat", "kalam"].includes(fonteDoPostit(n)))
+
+    assert.equal(larguraDoPostit(n), larguraDoPostit(n))
+    assert.ok([176, 200, 224].includes(larguraDoPostit(n)))
+  }
+})
+
+test("formato e fonte não andam colados", () => {
+  // Se ambos lessem o mesmo bit do hash, toda fita viria com a mesma fonte e
+  // as quatro combinações virariam duas. Este teste é a razão de `fatia`
+  // existir — sem ela, ele falha.
+  const combinacoes = new Set(
+    Array.from({ length: 400 }, (_, i) => `${formatoDoPostit("n" + i)}/${fonteDoPostit("n" + i)}`)
+  )
+  assert.equal(combinacoes.size, 4, `só ${combinacoes.size} combinações: [...combinacoes]`)
+})
+
+test("o texto usa o mesmo matiz do papel, mais escuro", () => {
+  for (const n of NOMES) {
+    const matiz = matizDoPostit(n, TEMAS.birthday)
+    assert.ok(corDoPostit(n, TEMAS.birthday).endsWith(` ${matiz})`))
+    assert.equal(corDoTextoPostit(n, TEMAS.birthday), `oklch(0.32 0.06 ${matiz})`)
   }
 })
 
 test("nome vazio não quebra", () => {
   assert.match(corDoPostit("", TEMAS.birthday), /^oklch\(/)
+  assert.match(corDoTextoPostit("", TEMAS.birthday), /^oklch\(/)
   assert.ok(Number.isFinite(inclinacaoDoPostit("")))
-  assert.ok(["liso", "listrado", "pontilhado"].includes(texturaDoPostit("")))
+  assert.ok(["fita", "percevejo"].includes(formatoDoPostit("")))
+  assert.ok(["caveat", "kalam"].includes(fonteDoPostit("")))
+  assert.ok(larguraDoPostit("") > 0)
 })

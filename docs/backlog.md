@@ -32,88 +32,18 @@ fundo de papel com grão, saudação vinda do tema com `title` virando o nome do
 homenageado, edição de evento (`PATCH`), compartilhamento via Web Share API e
 abertura com bolo — vela reescrita em três camadas.
 
+Depois disso, no mesmo dia: carrossel de fotos com Vercel Blob (upload com
+compressão no navegador, limpeza dos blobs em toda rota que apaga evento) e os
+nove templates de post-it de `C:nivesario\Templates` — fita ou percevejo,
+canto recortado, Caveat/Kalam sorteadas por autor, e texto num tom escuro do
+próprio matiz do papel.
+
 Não conferidos rodando: nenhum deles. `prisma generate` continua bloqueado pelo
 proxy, então a verificação foi `tsc --noEmit` + `node --test` + build da Vercel.
 
 ---
 
 ## Features
-
-### Carrossel de fotos na revelação
-
-Cards de foto espalhados, cada um com posição e rotação próprias. **Não é um
-carrossel de slides** — é uma composição com quatro comportamentos: entrada
-escalonada a partir do centro, flutuação contínua em loop, parallax seguindo o
-mouse (cada card com sua profundidade) e inclinação 3D no hover.
-
-Referência: `C:\anivesario\Carrossel Example\` (`.cards-row` / `.card`).
-
-**Bloqueado por ação do usuário, não por código:** precisa de um store do Vercel
-Blob criado no painel (o que provisiona o `BLOB_READ_WRITE_TOKEN`) e do pacote
-`@vercel/blob` instalado — e `npm install` nesta máquina já falhou duas vezes por
-bloqueio do EDR, com o agravante de o `postinstall` rodar `prisma generate`, que
-o proxy responde com 403. Por isso ficou fora do plano de 31/07.
-
-**Decidido:**
-- Armazenamento: **Vercel Blob** (1GB no free). Upload no formulário de criação de
-  evento, com preview antes de salvar.
-- Aparece **só na revelação** — as fotos são parte da surpresa.
-- Reimplementar em **framer-motion**, não GSAP: o exemplo usa GSAP + ScrollTrigger
-  via CDN, e o framer-motion (já instalado) faz tudo isso. Evita dependência nova
-  num ambiente onde `npm install` já quebrou duas vezes pelo EDR.
-
-**Em aberto:**
-- **Quantas fotos no máximo?** O exemplo tem 8 cards com posições fixas no CSS.
-  Com quantidade variável, as posições precisam ser calculadas — ou fixamos um
-  teto e um layout por quantidade.
-- **Limite de tamanho e compressão** antes do upload.
-- **Parallax não existe no celular.** Fallback: só a flutuação contínua, ou
-  giroscópio?
-- **Limpeza dos blobs.** Eventos se apagam em 12h; as imagens precisam ser
-  apagadas junto, no `deleteEventIfExpired` e no cron, senão vaza storage. É o
-  ponto mais fácil de esquecer.
-
-### Formatos de postit (maior impacto visual)
-
-Hoje há três texturas procedurais (`liso`, `listrado`, `pontilhado`) em
-`lib/postit-visual.ts`, todas sutis demais para se notar. Trocar por **formatos**,
-sorteados pelo mesmo hash do nome do autor:
-
-- **Fita adesiva** no topo — semitransparente, borda pontilhada nas pontas para
-  parecer cortada
-- **Canto dobrado** — [técnica em CSS puro do Nicolas Gallagher](https://nicolasgallagher.com/pure-css-folded-corner-effect/),
-  sem imagem nem markup extra
-- **Percevejo** — gradientes radiais
-- **Papel pautado / quadriculado** — gradientes empilhados
-- **Polaroid** — borda inferior grossa, leve rotação, sombra suave
-- **Borda rasgada**
-
-Tudo em CSS, sem imagem e sem requisição. Referências:
-[20+ CSS paper effects](https://freefrontend.com/css-paper-effects/),
-[3 experiments with CSS paper effects](https://dev.to/s_aitchison/3-experiments-with-css-paper-effects-2o56),
-[washi tape notes](http://www.codeitpretty.com/2013/10/washi-tape-notes-with-html-css.html).
-
-**A decidir:** os formatos são sorteados por autor (como cor e inclinação) ou
-definidos pelo tema do evento?
-
-### Fontes de caligrafia nos recados
-
-Sortear entre 2–3 fontes manuscritas **pelo hash do nome do autor**, para que cada
-recado pareça escrito por uma pessoa diferente — que é literalmente o caso. A
-moldura (admin, botões) continua no Geist.
-
-| Fonte | Força |
-|---|---|
-| **Caveat** | Referência para sticky notes. Tem alternativas contextuais: duas letras iguais seguidas são desenhadas diferente, o que evita o efeito "fonte" |
-| **Patrick Hand** | A mais legível em tamanho pequeno; letras separadas |
-| **Kalam** | Meio-termo, traço de esferográfica |
-
-Todas no Google Fonts, compatíveis com `next/font`. Referências:
-[handwriting Google Fonts](https://www.notebookandpenguin.com/handwriting-google-fonts/),
-[free handwriting/script fonts 2026](https://fontalternatives.com/blog/best-free-handwriting-script-fonts-2026/).
-
-**Atenção:** cada fonte extra pesa no bundle e no tempo de build. Avaliar se 3
-fontes se justificam ou se 2 bastam.
 
 ### Revelação em cascata
 

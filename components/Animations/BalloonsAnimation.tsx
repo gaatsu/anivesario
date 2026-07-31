@@ -3,16 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import type { PropsAnimacao } from "./tipos"
-
-interface Balao {
-  id: number
-  left: number
-  cor: string
-  atraso: number
-  duracao: number
-  deriva: number
-  escala: number
-}
+import { gerarBaloes, transicaoDoBalao, type Balao } from "@/lib/balao"
 
 let proximoId = 0
 
@@ -26,20 +17,9 @@ export default function BalloonsAnimation({ fase, cores, intensidade }: PropsAni
       // Acrescenta em vez de substituir. Substituir destruía os balões da
       // celebração quando a fase virava ambiente aos 2,5s — e como cada balão
       // leva de 7 a 12s para cruzar a tela, eles eram apagados antes de subir.
-      setBaloes((atuais) => [
-        ...atuais,
-        ...Array.from({ length: quantidade }, (_, i) => ({
-          id: proximoId++,
-          left: Math.random() * 90 + 5,
-          cor: cores[i % cores.length],
-          atraso: Math.random() * atrasoMax,
-          duracao: 7 + Math.random() * 5,
-          // Deriva lateral: sobem em arco, não em linha reta.
-          deriva: (Math.random() - 0.5) * 120,
-          // Tamanhos diferentes dão profundidade — os menores lêem como distantes.
-          escala: 0.6 + Math.random() * 0.6,
-        })),
-      ])
+      const novos = gerarBaloes(quantidade, atrasoMax, cores, proximoId)
+      proximoId += quantidade
+      setBaloes((atuais) => [...atuais, ...novos])
     },
     [cores]
   )
@@ -79,14 +59,7 @@ export default function BalloonsAnimation({ fase, cores, intensidade }: PropsAni
           style={{ left: `${b.left}%`, bottom: -120, scale: b.escala }}
           initial={{ y: 0, x: 0, opacity: 0 }}
           animate={{ y: "-125vh", x: b.deriva, opacity: [0, 1, 1, 0] }}
-          transition={{
-            duration: b.duracao,
-            delay: b.atraso,
-            // easeOut: sobem rápido e vão perdendo força, como algo que flutua.
-            // O original usava linear, que lê como robótico.
-            ease: "easeOut",
-            opacity: { times: [0, 0.12, 0.85, 1] },
-          }}
+          transition={transicaoDoBalao(b)}
           // Cada balão se remove ao terminar a viagem, em vez de a lista inteira
           // ser trocada. Sem isto a lista cresceria para sempre.
           onAnimationComplete={() =>

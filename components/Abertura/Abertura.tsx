@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import Bolo from "./Bolo"
+import Medalhao from "./Medalhao"
 import type { Tema } from "@/lib/themes"
 
 /** Tempo de tela antes do fade. O exemplo original levava ~7s só para desenhar
@@ -74,7 +75,15 @@ export default function Abertura({ tema, nome, cores, aoTerminar }: Props) {
         </motion.h1>
       </div>
 
-      <Bolo acento={tema.acento} cores={cores} className="relative w-56 md:w-72" />
+      {/* O bolo é do aniversário e só dele: uma promoção ou uma despedida
+          abrindo com bolo é errado de um jeito que se nota na hora. Os outros
+          três temas ganham o medalhão, montado a partir da cor e do ícone que
+          o próprio tema já declara. */}
+      {tema.id === "birthday" ? (
+        <Bolo acento={tema.acento} cores={cores} className="relative w-56 md:w-72" />
+      ) : (
+        <Medalhao tema={tema} cores={cores} className="relative w-48 md:w-60" />
+      )}
 
       {/* Sempre visível, mesmo tocando uma vez só: uma tela de 3s sem saída é
           uma tela travada para quem já viu ou não quer ver. */}

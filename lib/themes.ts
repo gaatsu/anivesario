@@ -1,4 +1,9 @@
-export type TipoEvento = "birthday" | "farewell" | "welcome" | "achievement"
+export type TipoEvento =
+  | "birthday"
+  | "farewell"
+  | "welcome"
+  | "vacation"
+  | "achievement"
 
 export interface Tema {
   id: TipoEvento
@@ -60,6 +65,20 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     animacoesPadrao: ["confetti_up", "stars"],
     icones: ["Sparkles", "Sun", "Star", "Laugh", "Heart", "Zap"],
   },
+  vacation: {
+    id: "vacation",
+    label: "Volta de férias",
+    descricao: "Retorno de férias ou licença",
+    saudacao: "Bem-vindo(a) de volta",
+    convite: "Dê as boas-vindas de volta a",
+    // Faixa de água, longe das outras quatro: 340 aniversário, 250 despedida,
+    // 150 boas-vindas, 70 conquista.
+    matizBase: 200,
+    amplitudeMatiz: 70,
+    acento: "#0891b2",
+    animacoesPadrao: ["petals", "confetti"],
+    icones: ["Sun", "TreePalm", "Plane", "Luggage", "Waves", "Smile"],
+  },
   achievement: {
     id: "achievement",
     label: "Conquista",
@@ -70,7 +89,7 @@ export const TEMAS: Record<TipoEvento, Tema> = {
     amplitudeMatiz: 60,
     acento: "#b45309",
     animacoesPadrao: ["fireworks", "stars"],
-    icones: ["Star", "Sparkles", "Zap", "Flame", "Gift", "Heart"],
+    icones: ["Trophy", "Star", "Sparkles", "Zap", "Award", "Flame"],
   },
 }
 
@@ -115,5 +134,6 @@ export const PALETA_ANIMACAO: Record<TipoEvento, string[]> = {
   birthday: ["#f472b6", "#a78bfa", "#60a5fa", "#fbbf24"],
   farewell: ["#818cf8", "#38bdf8", "#2dd4bf", "#c7d2fe"],
   welcome: ["#34d399", "#22d3ee", "#fde047", "#86efac"],
+  vacation: ["#22d3ee", "#38bdf8", "#fde047", "#5eead4"],
   achievement: ["#fbbf24", "#f59e0b", "#a78bfa", "#fcd34d"],
 }

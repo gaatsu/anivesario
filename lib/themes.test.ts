@@ -2,13 +2,13 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { TEMAS, resolverTema, resolverAnimacoes, ANIMACOES } from "./themes.ts"
 
-test("os quatro tipos existem com id consistente", () => {
+test("os cinco tipos existem com id consistente", () => {
   for (const [chave, tema] of Object.entries(TEMAS)) {
     assert.equal(tema.id, chave)
     assert.ok(tema.label.length > 0)
     assert.ok(tema.animacoesPadrao.length > 0)
   }
-  assert.equal(Object.keys(TEMAS).length, 4)
+  assert.equal(Object.keys(TEMAS).length, 5)
 })
 
 test("todo tema traz saudação e convite próprios", () => {
@@ -20,7 +20,7 @@ test("todo tema traz saudação e convite próprios", () => {
     assert.ok(tema.convite.length > 0, `${tema.id} sem convite`)
     saudacoes.add(tema.saudacao)
   }
-  assert.equal(saudacoes.size, 4, "duas saudações iguais tornam os temas indistinguíveis")
+  assert.equal(saudacoes.size, 5, "duas saudações iguais tornam os temas indistinguíveis")
   assert.equal(resolverTema("birthday").saudacao, "Feliz Aniversário")
 })
 

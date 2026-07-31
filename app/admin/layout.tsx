@@ -1,42 +1,24 @@
-"use client"
-
-import { authClient } from "@/lib/neon-auth-client"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { redirect } from "next/navigation"
 import Link from "next/link"
-import { LogOut, LayoutDashboard, Users } from "lucide-react"
+import { LayoutDashboard, Users } from "lucide-react"
+import { getCurrentUser } from "@/lib/current-user"
+import LogoutButton from "@/components/LogoutButton"
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { data: session, isPending } = authClient.useSession()
-  const router = useRouter()
+// Server Component: a sessão é resolvida antes do render, então some o estado de
+// "Carregando..." que a versão client-side mostrava em toda navegação.
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser()
 
-  useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/auth/login")
-    }
-  }, [isPending, session, router])
-
-  if (isPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return null
+  if (!user) {
+    redirect("/auth/login")
   }
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-white shadow-lg">
+      <aside className="w-64 bg-white shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <h2 className="text-2xl font-bold text-pink-600">🎉 Aniversário</h2>
-          <p className="text-xs text-gray-500 mt-1">{session?.user?.email}</p>
+          <p className="text-xs text-gray-600 mt-1">{user.email}</p>
         </div>
 
         <nav className="p-4 space-y-2">
@@ -46,21 +28,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="font-medium">Dashboard</span>
           </Link>
 
-          <Link href="/admin/delegados"
-            className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
-            <Users className="w-5 h-5 text-purple-500" />
-            <span className="font-medium">Delegados</span>
-          </Link>
+          {user.role === "MASTER_ADMIN" && (
+            <Link href="/admin/delegados"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+              <Users className="w-5 h-5 text-purple-500" />
+              <span className="font-medium">Delegados</span>
+            </Link>
+          )}
         </nav>
 
-        <div className="absolute bottom-6 left-6 right-6">
-          <button
-            onClick={() => authClient.signOut().then(() => router.push("/auth/login"))}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium"
-          >
-            <LogOut className="w-5 h-5" />
-            Sair
-          </button>
+        <div className="mt-auto p-6">
+          <LogoutButton />
         </div>
       </aside>
 

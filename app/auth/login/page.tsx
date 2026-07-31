@@ -1,6 +1,5 @@
 "use client"
 
-import { authClient } from "@/lib/neon-auth-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Mail, Lock, ArrowRight } from "lucide-react"
@@ -18,18 +17,20 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error: signInError } = await authClient.signIn.email({
-        email,
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (signInError) {
-        setError(signInError.message ?? "Credenciais inválidas")
-      } else {
+      if (res.ok) {
         router.push("/admin/dashboard")
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.message ?? "Credenciais inválidas")
       }
-    } catch (err) {
+    } catch {
       setError("Erro ao fazer login")
     } finally {
       setIsLoading(false)

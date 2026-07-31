@@ -1,20 +1,18 @@
-"use client"
-
 import Link from "next/link"
-import { authClient } from "@/lib/neon-auth-client"
+import { getCurrentUser } from "@/lib/current-user"
 import { Cake, Gift, PartyPopper } from "lucide-react"
 
-export default function Home() {
-  const { data: session } = authClient.useSession()
+export default async function Home() {
+  const user = await getCurrentUser()
 
-  if (session) {
+  if (user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center space-y-8 max-w-2xl">
           <div className="inline-flex items-center gap-3 justify-center">
             <PartyPopper className="w-10 h-10 text-pink-500" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-              Bem-vindo, {session.user?.name}!
+              Bem-vindo, {user.name}!
             </h1>
             <Gift className="w-10 h-10 text-yellow-500" />
           </div>
@@ -31,12 +29,14 @@ export default function Home() {
               <p className="text-sm text-gray-600">Gerenciar seus eventos e murais</p>
             </Link>
 
-            <Link href="/admin/delegados"
-              className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <Gift className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-              <h2 className="font-semibold text-lg mb-2">Delegados</h2>
-              <p className="text-sm text-gray-600">Gerenciar admin delegados</p>
-            </Link>
+            {user.role === "MASTER_ADMIN" && (
+              <Link href="/admin/delegados"
+                className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <Gift className="w-8 h-8 text-purple-500 mx-auto mb-3" />
+                <h2 className="font-semibold text-lg mb-2">Delegados</h2>
+                <p className="text-sm text-gray-600">Gerenciar admin delegados</p>
+              </Link>
+            )}
           </div>
         </div>
       </div>

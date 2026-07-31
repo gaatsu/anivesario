@@ -34,7 +34,7 @@ abertura com bolo — vela reescrita em três camadas.
 
 Depois disso, no mesmo dia: carrossel de fotos com Vercel Blob (upload com
 compressão no navegador, limpeza dos blobs em toda rota que apaga evento) e os
-nove templates de post-it de `C:nivesario\Templates` — fita ou percevejo,
+nove templates de post-it de `C:\anivesario\Templates` — fita ou percevejo,
 canto recortado, Caveat/Kalam sorteadas por autor, e texto num tom escuro do
 próprio matiz do papel.
 

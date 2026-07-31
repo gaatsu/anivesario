@@ -81,6 +81,10 @@ model Postit {
   color     String   @default("#FEF08A")
   icon      String?
 
+  // Estilo escolhido no formulário. Vazio = automático (sorteado pelo nome do
+  // autor). Ver ESTILOS em lib/postit-visual.ts.
+  template  String   @default("")
+
   positionX Float    @default(0)
   positionY Float    @default(0)
 

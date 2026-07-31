@@ -10,6 +10,8 @@ import {
   formatoDoPostit,
   fonteDoPostit,
   larguraDoPostit,
+  ESTILOS,
+  resolverEstilo,
 } from "./postit-visual.ts"
 
 const NOMES = ["Ana", "Bruno", "Carla", "Diego", "Alan", "Maria Fernanda", "José"]
@@ -94,6 +96,31 @@ test("o texto usa o mesmo matiz do papel, mais escuro", () => {
     const matiz = matizDoPostit(n, TEMAS.birthday)
     assert.ok(corDoPostit(n, TEMAS.birthday).endsWith(` ${matiz})`))
     assert.equal(corDoTextoPostit(n, TEMAS.birthday), `oklch(0.32 0.06 ${matiz})`)
+  }
+})
+
+test("estilo escolhido vence o sorteio pelo nome", () => {
+  for (const estilo of ESTILOS) {
+    const resolvido = resolverEstilo(estilo.id, "Ana")
+    assert.equal(resolvido.formato, estilo.formato)
+    assert.equal(resolvido.fonte, estilo.fonte)
+  }
+})
+
+test("os quatro estilos cobrem as duas combinações de cada eixo", () => {
+  assert.equal(ESTILOS.length, 4)
+  assert.equal(new Set(ESTILOS.map((e) => e.id)).size, 4)
+  assert.equal(new Set(ESTILOS.map((e) => `${e.formato}/${e.fonte}`)).size, 4)
+})
+
+test("template vazio ou desconhecido volta para o sorteio", () => {
+  // Desconhecido acontece de verdade: se um id sair do registro, os recados já
+  // gravados continuam apontando para ele. Cair no automático é o que impede a
+  // tela de quebrar nesse dia.
+  for (const n of NOMES) {
+    const sorteado = { formato: formatoDoPostit(n), fonte: fonteDoPostit(n) }
+    assert.deepEqual(resolverEstilo("", n), sorteado)
+    assert.deepEqual(resolverEstilo("estilo_que_nao_existe", n), sorteado)
   }
 })
 

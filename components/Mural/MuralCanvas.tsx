@@ -11,6 +11,7 @@ interface Postit {
   message: string
   color: string
   icon?: string | null
+  template?: string
   positionX: number
   positionY: number
 }
@@ -80,6 +81,7 @@ export default function MuralCanvas({
             message={postit.message}
             color={postit.color}
             icon={postit.icon}
+            template={postit.template}
             positionX={postit.positionX}
             positionY={postit.positionY}
             disabled={readOnly}

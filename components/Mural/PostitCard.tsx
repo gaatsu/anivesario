@@ -10,9 +10,8 @@ import {
   corDoPercevejo,
   corDoPostit,
   corDoTextoPostit,
-  fonteDoPostit,
-  formatoDoPostit,
   inclinacaoDoPostit,
+  resolverEstilo,
   larguraDoPostit,
 } from "@/lib/postit-visual"
 import { POSTIT_COLORS } from "@/lib/utils"
@@ -44,6 +43,8 @@ interface PostitCardProps {
   /** Cor escolhida à mão no formulário. Fora da paleta = usa a cor do tema. */
   color: string
   icon?: string | null
+  /** Estilo escolhido no formulário. Vazio = sorteado pelo nome. */
+  template?: string
   positionX: number
   positionY: number
   /** No link de revelação o mural é só para ver — nada de arrastar. */
@@ -57,6 +58,7 @@ export default function PostitCard({
   message,
   color,
   icon,
+  template = "",
   positionX,
   positionY,
   disabled = false,
@@ -83,8 +85,9 @@ export default function PostitCard({
   const corFita = escolhidaAMao ? "rgba(255,255,255,0.75)" : corDaFita(name, tema)
   const corPercevejo = escolhidaAMao ? "#8a7361" : corDoPercevejo(name, tema)
 
-  const formato = formatoDoPostit(name)
-  const fonte = FONTES[fonteDoPostit(name)]
+  const estilo = resolverEstilo(template, name)
+  const formato = estilo.formato
+  const fonte = FONTES[estilo.fonte]
 
   return (
     <div

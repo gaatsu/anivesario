@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { deleteEventIfExpired } from "@/lib/eventLifecycle"
+import { ESTILOS } from "@/lib/postit-visual"
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +9,7 @@ export async function POST(
 ) {
   try {
     const { shareLink } = await params
-    const { name, message, color, icon, positionX, positionY } = await request.json()
+    const { name, message, color, icon, template, positionX, positionY } = await request.json()
 
     if (!name || !message) {
       return NextResponse.json(
@@ -43,6 +44,9 @@ export async function POST(
         // formulário chega aqui preenchida.
         color: typeof color === "string" ? color.trim() : "",
         icon: icon || null,
+        // Mesma sentinela da cor: vazio = automático. Um id fora do registro é
+        // descartado aqui, para o banco nunca guardar estilo que não existe.
+        template: ESTILOS.some((e) => e.id === template) ? template : "",
         positionX: positionX ?? Math.random() * 600,
         positionY: positionY ?? Math.random() * 400,
       },

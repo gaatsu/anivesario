@@ -14,6 +14,7 @@ interface Postit {
   message: string
   color: string
   icon?: string | null
+  template?: string
   positionX: number
   positionY: number
 }

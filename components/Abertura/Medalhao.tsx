@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion"
 import * as Icons from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import type { Tema } from "@/lib/themes"
+import type { PropsPeca } from "./pecas"
 
 /**
  * Peça central dos temas que ainda não têm cena própria.
@@ -21,13 +21,7 @@ const POSICOES_BRILHO = [
   { x: "50%", y: "6%", r: 5 },
 ]
 
-interface Props {
-  tema: Tema
-  cores: string[]
-  className?: string
-}
-
-export default function Medalhao({ tema, cores, className = "" }: Props) {
+export default function Medalhao({ tema, cores, className = "" }: PropsPeca) {
   const reduzido = useReducedMotion()
 
   const nomeIcone = tema.icones[0]

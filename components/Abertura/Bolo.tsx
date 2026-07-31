@@ -1,6 +1,7 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
+import type { PropsPeca } from "./pecas"
 
 /**
  * Borda inferior de glacê, escorrendo. Em vez de repetir a mesma gota, a
@@ -54,15 +55,8 @@ const surgir = {
   visivel: { opacity: 1, y: 0, scale: 1 },
 }
 
-interface Props {
-  /** Cor sólida do tema, usada nas fitas do bolo. */
-  acento: string
-  /** Paleta do tema, usada nos confeitos. */
-  cores: string[]
-  className?: string
-}
-
-export default function Bolo({ acento, cores, className = "" }: Props) {
+export default function Bolo({ tema, cores, className = "" }: PropsPeca) {
+  const acento = tema.acento
   const reduzido = useReducedMotion()
   const de = reduzido ? "visivel" : "oculto"
   const t = (delay: number, duration = 0.55) =>

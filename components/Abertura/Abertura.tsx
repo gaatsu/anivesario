@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import Bolo from "./Bolo"
-import Medalhao from "./Medalhao"
+import { pecaDoTema } from "./pecas"
 import type { Tema } from "@/lib/themes"
 
 /** Tempo de tela antes do fade. O exemplo original levava ~7s só para desenhar
@@ -24,6 +23,7 @@ interface Props {
 export default function Abertura({ tema, nome, cores, aoTerminar }: Props) {
   const reduzido = useReducedMotion()
   const [saindo, setSaindo] = useState(false)
+  const Peca = pecaDoTema(tema.id)
 
   useEffect(() => {
     const id = setTimeout(() => setSaindo(true), reduzido ? DURACAO_REDUZIDA_MS : DURACAO_MS)
@@ -75,15 +75,10 @@ export default function Abertura({ tema, nome, cores, aoTerminar }: Props) {
         </motion.h1>
       </div>
 
-      {/* O bolo é do aniversário e só dele: uma promoção ou uma despedida
-          abrindo com bolo é errado de um jeito que se nota na hora. Os outros
-          três temas ganham o medalhão, montado a partir da cor e do ícone que
-          o próprio tema já declara. */}
-      {tema.id === "birthday" ? (
-        <Bolo acento={tema.acento} cores={cores} className="relative w-56 md:w-72" />
-      ) : (
-        <Medalhao tema={tema} cores={cores} className="relative w-48 md:w-60" />
-      )}
+      {/* O bolo é do aniversário e só dele: uma promoção abrindo com bolo é
+          errado de um jeito que se nota na hora. Quem escolhe é o registro em
+          pecas.ts; tema sem peça própria cai no medalhão. */}
+      <Peca tema={tema} cores={cores} className="relative w-52 md:w-64" />
 
       {/* Sempre visível, mesmo tocando uma vez só: uma tela de 3s sem saída é
           uma tela travada para quem já viu ou não quer ver. */}

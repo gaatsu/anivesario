@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
-import Bolo from "@/components/Abertura/Bolo"
-import Medalhao from "@/components/Abertura/Medalhao"
+import { pecaDoTema } from "@/components/Abertura/pecas"
 import { PALETA_ANIMACAO, TEMAS } from "@/lib/themes"
 
 /**
@@ -25,11 +24,10 @@ export default function PreviewAbertura() {
         {Object.values(TEMAS).map((tema) => (
           <section key={tema.id} className="flex w-64 flex-col items-center gap-3">
             <div className="flex h-72 items-center justify-center">
-              {tema.id === "birthday" ? (
-                <Bolo acento={tema.acento} cores={PALETA_ANIMACAO[tema.id]} className="w-56" />
-              ) : (
-                <Medalhao tema={tema} cores={PALETA_ANIMACAO[tema.id]} className="w-44" />
-              )}
+              {(() => {
+                const Peca = pecaDoTema(tema.id)
+                return <Peca tema={tema} cores={PALETA_ANIMACAO[tema.id]} className="w-52" />
+              })()}
             </div>
             <p className="text-seccao font-medium" style={{ color: tema.acento }}>
               {tema.saudacao}, Maria!

@@ -25,88 +25,19 @@ então os deploys dele são de produção, não preview. Duas causas possíveis:
 
 ---
 
+## Entregues
+
+Implementados no plano `docs/superpowers/plans/2026-07-31-abertura-nome-e-identidade.md`:
+fundo de papel com grão, saudação vinda do tema com `title` virando o nome do
+homenageado, edição de evento (`PATCH`), compartilhamento via Web Share API e
+abertura com bolo — vela reescrita em três camadas.
+
+Não conferidos rodando: nenhum deles. `prisma generate` continua bloqueado pelo
+proxy, então a verificação foi `tsc --noEmit` + `node --test` + build da Vercel.
+
+---
+
 ## Features
-
-### Fundo com textura de papel
-
-**Independente de tudo o mais e barato.** Hoje o fundo é `slate-50`/`slate-100`,
-frio e sem textura, o que destoa de um app sobre murais de recado.
-
-Referência: `C:\anivesario\Carrossel Example\main.css`. Duas camadas:
-
-1. Radial gradient cor de papel — `#f8f3e7` → `#f2ead6` → `#e9dec3`
-2. **Camada de grão**: ruído SVG via `feTurbulence`, `opacity: 0.06`,
-   `mix-blend-mode: multiply`, como data-URI inline — sem requisição, sem imagem
-
-O grão funciona por cima de qualquer paleta, então cada tema de evento pode ter o
-próprio fundo e o grão unifica visualmente.
-
-**A decidir:** o fundo de papel vale para a moldura sóbria (admin/login) também,
-ou só para as telas de mural?
-
-### Abertura com bolo antes da revelação
-
-Uma tela de abertura antes do mural: saudação + nome do homenageado, com uma peça
-animada ao centro, e fade para os postits, o carrossel e os efeitos.
-
-Referência: `C:\anivesario\Bolo\` — bolo em **SVG puro com animação SMIL** (tags
-`<animate>` encadeadas por `begin="id.end"`, desenhando o bolo camada por camada),
-vela em CSS entrando aos 6s e chamas aos 6,5s. Zero JavaScript.
-
-**Decidido:**
-- **Estrutura comum, centro por tema.** Um componente de abertura com saudação +
-  nome, e no centro uma peça por tema. Começa com o bolo no aniversário; os outros
-  três mostram só a tipografia com a cor do tema até ganharem peça própria.
-- **Só na primeira visita** (`sessionStorage`). Quem recarregar cai direto no
-  mural — a surpresa acontece uma vez.
-- **Encurtar para ~4s.** O original leva ~7s antes de mostrar qualquer coisa, o
-  que é muito para uma porta de entrada. O confetti começa junto do fade.
-
-**O nome vem do campo de criação — sem migration.** Em vez de um `honoreeName`
-novo, o campo `title` que já existe passa a ser **o nome do homenageado**:
-
-- Rótulo muda de "Título" para **"Nome do homenageado"**, e o placeholder de
-  `"Ex: Aniversário da Maria"` para `"Ex: Maria"`. Hoje o placeholder induz
-  exatamente o formato errado — com ele, a abertura diria "Feliz Aniversário,
-  Aniversário da Maria".
-- A **saudação vem do tema**, não do usuário: `Tema` ganha um campo `saudacao`
-  ("Feliz Aniversário", "Boa sorte", "Bem-vindo(a)", "Parabéns"), composto com o
-  nome tanto na abertura quanto no título do mural. Isso também resolve o
-  cabeçalho do mural, que hoje é texto livre e fica inconsistente entre eventos.
-
-**Consequência a resolver:** **não existe edição de evento.**
-`app/api/eventos/[id]/route.ts` só tem `GET` e `DELETE`. Quem digitar o nome
-errado precisa apagar o evento — e perde os recados junto. Com o campo virando
-"nome", errar fica mais provável e mais visível. Ver *Editar evento* abaixo.
-
-Os eventos já gravados ("Aniversário Anabelle" e quatro de teste) vão exibir a
-saudação duplicada até serem recriados ou editados.
-
-**Cuidados:**
-- **SMIL não respeita `prefers-reduced-motion`**, diferente do `canvas-confetti`.
-  Tratar à mão, ou a abertura vira uma tela travada de 4s para quem pediu menos
-  movimento.
-- Precisa ser pulável mesmo aparecendo uma vez só.
-
-#### Melhorar a vela
-
-O autor do exemplo registrou no `main.js` que não ficou satisfeito com a vela, e
-com razão. Hoje as 5 chamas (`.fuego`) estão **na mesma posição**, são círculos
-perfeitos (`border-radius: 100%`) e diferem só na duração; cada uma vai a
-`scale(0)` no meio do ciclo, sumindo por completo. O resultado é um blob pulsando.
-
-Melhorias, todas em CSS puro:
-
-- **Forma de gota** em vez de círculo: `border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%`
-- **Três camadas sobrepostas** — externa laranja difusa, média amarela, núcleo
-  branco-azulado — em vez de 5 círculos idênticos
-- **Oscilação lateral + alongamento** (`translateX` mínimo e `scaleY`): chama de
-  verdade balança, a atual só pulsa na vertical
-- **Defasagem por `animation-delay`**, não por durações radicalmente diferentes,
-  para as camadas lerem como uma chama só
-- **Pavio** — retângulo escuro no topo da vela, hoje inexistente
-- **Brilho pulsante no bolo** — `radial-gradient` sob a chama, simulando a luz
-  lançada
 
 ### Carrossel de fotos na revelação
 
@@ -116,6 +47,12 @@ escalonada a partir do centro, flutuação contínua em loop, parallax seguindo 
 mouse (cada card com sua profundidade) e inclinação 3D no hover.
 
 Referência: `C:\anivesario\Carrossel Example\` (`.cards-row` / `.card`).
+
+**Bloqueado por ação do usuário, não por código:** precisa de um store do Vercel
+Blob criado no painel (o que provisiona o `BLOB_READ_WRITE_TOKEN`) e do pacote
+`@vercel/blob` instalado — e `npm install` nesta máquina já falhou duas vezes por
+bloqueio do EDR, com o agravante de o `postinstall` rodar `prisma generate`, que
+o proxy responde com 403. Por isso ficou fora do plano de 31/07.
 
 **Decidido:**
 - Armazenamento: **Vercel Blob** (1GB no free). Upload no formulário de criação de
@@ -198,47 +135,6 @@ aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fix
 **Um mural com 30 recados deveria estourar mais que um com 2.** Barato de fazer e
 dá significado à animação.
 
-### Compartilhar no WhatsApp sem abrir o WhatsApp Web
-
-Hoje o dashboard só copia o link para a área de transferência; colar no WhatsApp é
-manual, e no desktop qualquer link `wa.me` cai no WhatsApp Web.
-
-**Solução: Web Share API** (`navigator.share`). Abre a folha de compartilhamento
-nativa do sistema, onde o WhatsApp aparece como opção — um toque, sem passar por
-navegador nenhum. É o comportamento nativo, não uma gambiarra de URL.
-
-```
-navigator.share({
-  title: "Mensagens Corp.",
-  text: "Deixe um recado para a Maria",
-  url: "<link de coleta ou da surpresa>",
-})
-```
-
-Requisitos e limites:
-- Exige **HTTPS** e um **gesto do usuário** (clique) — ambos já satisfeitos
-- Suporte: Chrome e Safari no celular (o caso principal), Chrome/Edge no Windows,
-  Safari no macOS. **Firefox desktop não suporta**
-- Cadeia de fallback: `navigator.share` → link `wa.me/?text=` → copiar para a área
-  de transferência (o que já existe hoje)
-
-**Cuidado que importa neste app:** são dois links com públicos opostos. O texto
-compartilhado precisa deixar explícito qual está indo — mandar o link da surpresa
-para o grupo dos colegas estraga tudo. O botão de compartilhar deve existir
-separado em cada um, com texto próprio.
-
-### Editar evento
-
-Hoje `app/api/eventos/[id]/route.ts` expõe só `GET` e `DELETE`: um evento criado
-com dado errado só pode ser apagado, levando os recados junto.
-
-Isso passa a incomodar bem mais quando o título virar **o nome do homenageado** —
-errar o nome de alguém e não poder corrigir sem destruir os recados que os colegas
-já deixaram é o pior tipo de erro possível neste app.
-
-Escopo mínimo: `PATCH` para nome, descrição, data e tipo, com um formulário de
-edição no card do dashboard. Não precisa mexer em links nem em animações.
-
 ### Vibração no celular (haptics)
 
 `navigator.vibrate()` na abertura da revelação, como complemento — e como
@@ -273,6 +169,14 @@ não arquitetura:
 | Intensidade do ambiente (0.1) | `components/Animations/AnimationLayer.tsx` | |
 | Opacidade do canvas (80% / 30%) | `components/Animations/AnimationLayer.tsx` | Recém-alterada, não validada |
 | Duração dos balões (7–12s) | `components/Animations/BalloonsAnimation.tsx` | **Provavelmente lenta demais** — o confetti dura 3s, e balões podem passar despercebidos |
+
+### Eventos já gravados com o título antigo
+
+Os seis eventos no banco ("Alan", "Aniversário Anabelle", "Teste", "Teste 3",
+"Teste", "Teste 2") foram criados quando `title` era texto livre. Agora que a
+saudação vem do tema, "Aniversário Anabelle" abre como **"Feliz Aniversário,
+Aniversário Anabelle"**. O botão de editar no dashboard já resolve — é só trocar
+o campo para "Anabelle".
 
 ### Pendências de verificação
 

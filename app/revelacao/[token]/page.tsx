@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import { useParams } from "next/navigation"
-import { Plus, Download, PartyPopper } from "lucide-react"
+import { use, useCallback, useEffect, useRef, useState } from "react"
+import { Download, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
-import PostitForm from "@/components/Forms/PostitForm"
+import AnimationLayer from "@/components/Animations/AnimationLayer"
 
 interface Postit {
   id: string
@@ -25,44 +24,46 @@ interface EventData {
   postits: Postit[]
 }
 
-export default function MuralPage() {
-  const params = useParams()
-  const shareLink = params.shareLink as string
+// Quanto tempo a festa dura ao abrir. Longo o suficiente para dar o efeito de
+// revelação, curto o suficiente para não atrapalhar a leitura dos recados.
+const DURACAO_ANIMACAO_MS = 8000
+
+export default function RevelacaoPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params)
 
   const [event, setEvent] = useState<EventData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
-  const [showForm, setShowForm] = useState(false)
+  const [showAnimations, setShowAnimations] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const muralRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchEvent()
-  }, [shareLink])
-
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     try {
-      const res = await fetch(`/api/mural/${shareLink}`)
+      const res = await fetch(`/api/revelacao/${token}`)
       if (!res.ok) {
-        setError("Evento não encontrado ou expirado")
+        setError("Este mural não existe mais")
         return
       }
-      const data = await res.json()
+      const data: EventData = await res.json()
       setEvent(data)
-    } catch (err) {
+
+      // A animação é o ponto deste link: dispara assim que o mural chega, e não
+      // ao deixar um recado (que é o que acontecia no link de coleta).
+      if (data.animations?.length) {
+        setShowAnimations(true)
+        setTimeout(() => setShowAnimations(false), DURACAO_ANIMACAO_MS)
+      }
+    } catch {
       setError("Erro ao carregar o mural")
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [token])
 
-  // Sem animação aqui de propósito: as animações são a surpresa do homenageado,
-  // e este é o link de coleta, usado por quem escreve o recado. Elas tocam ao
-  // abrir /revelacao/[token].
-  const handlePostitSuccess = () => {
-    setShowForm(false)
+  useEffect(() => {
     fetchEvent()
-  }
+  }, [fetchEvent])
 
   const handleExportPdf = async () => {
     if (!muralRef.current) return
@@ -99,7 +100,7 @@ export default function MuralPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">😔 Oops!</h1>
-          <p className="text-gray-600">{error || "Evento não encontrado"}</p>
+          <p className="text-gray-600">{error || "Mural não encontrado"}</p>
         </div>
       </div>
     )
@@ -107,34 +108,31 @@ export default function MuralPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      {showAnimations && <AnimationLayer animations={event.animations} />}
+
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          {/* bg-pink-600 é fallback: sem uma cor de fundo por baixo, se o
-              gradiente não pintar o título some por completo. */}
+          {/* bg-pink-600 é fallback: sem cor de fundo por baixo, se o gradiente
+              não pintar o título some por completo. */}
           <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
             {event.title}
           </h1>
-          {event.description && (
-            <p className="text-gray-600">{event.description}</p>
-          )}
+          {event.description && <p className="text-gray-600">{event.description}</p>}
+          <p className="text-sm text-gray-600">
+            {event.postits.length === 1
+              ? "1 recado deixado para você"
+              : `${event.postits.length} recados deixados para você`}
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-center">
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold hover:shadow-lg transition"
-          >
-            <Plus className="w-5 h-5" />
-            Deixar Recado
-          </button>
-
+        <div className="flex justify-center">
           <button
             onClick={handleExportPdf}
             disabled={isExporting}
             className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50"
           >
             <Download className="w-5 h-5" />
-            {isExporting ? "Exportando..." : "Exportar PDF"}
+            {isExporting ? "Exportando..." : "Salvar em PDF"}
           </button>
         </div>
 
@@ -143,27 +141,15 @@ export default function MuralPage() {
             <div className="bg-white rounded-2xl shadow-lg p-16 text-center">
               <PartyPopper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Nenhum recado ainda
+                Ainda não há recados
               </h2>
-              <p className="text-gray-600">Seja o primeiro a deixar uma mensagem!</p>
+              <p className="text-gray-600">Volte daqui a pouco.</p>
             </div>
           ) : (
-            <MuralCanvas
-              shareLink={shareLink}
-              postits={event.postits}
-              onPositionsChange={() => {}}
-            />
+            <MuralCanvas postits={event.postits} readOnly />
           )}
         </div>
       </div>
-
-      {showForm && (
-        <PostitForm
-          shareLink={shareLink}
-          onSuccess={handlePostitSuccess}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
     </div>
   )
 }

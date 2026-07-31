@@ -15,12 +15,20 @@ interface Postit {
 }
 
 interface MuralCanvasProps {
-  shareLink: string
+  /** Obrigatório fora do modo somente-leitura: é por ele que a posição é salva. */
+  shareLink?: string
   postits: Postit[]
-  onPositionsChange: (postits: Postit[]) => void
+  onPositionsChange?: (postits: Postit[]) => void
+  /** Link de revelação: o homenageado vê o mural, mas não reorganiza nada. */
+  readOnly?: boolean
 }
 
-export default function MuralCanvas({ shareLink, postits, onPositionsChange }: MuralCanvasProps) {
+export default function MuralCanvas({
+  shareLink,
+  postits,
+  onPositionsChange,
+  readOnly = false,
+}: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
 
   useEffect(() => {
@@ -28,6 +36,8 @@ export default function MuralCanvas({ shareLink, postits, onPositionsChange }: M
   }, [postits])
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (readOnly || !shareLink) return
+
     const { active, delta } = event
     const postitId = active.id as string
 
@@ -37,7 +47,7 @@ export default function MuralCanvas({ shareLink, postits, onPositionsChange }: M
         : p
     )
     setLocalPostits(updated)
-    onPositionsChange(updated)
+    onPositionsChange?.(updated)
 
     const movedPostit = updated.find((p) => p.id === postitId)
     if (movedPostit) {
@@ -69,6 +79,7 @@ export default function MuralCanvas({ shareLink, postits, onPositionsChange }: M
             icon={postit.icon}
             positionX={postit.positionX}
             positionY={postit.positionY}
+            disabled={readOnly}
           />
         ))}
       </div>

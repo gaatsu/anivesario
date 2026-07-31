@@ -39,7 +39,11 @@ model Event {
   creatorId    String
   creator      User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
+  // Dois links distintos: shareLink é o que circula entre quem deixa recado;
+  // revealLink é o que vai para o homenageado — ele abre o mural em modo
+  // somente-leitura e com as animações tocando.
   shareLink    String   @unique @default(cuid())
+  revealLink   String   @unique @default(cuid())
   status       EventStatus @default(ACTIVE)
 
   animations   String[] @default([])

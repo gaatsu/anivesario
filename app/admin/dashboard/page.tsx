@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus, Calendar, Share2, Trash2 } from "lucide-react"
+import { Plus, Calendar, Share2, Trash2, Gift, Copy, Check } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
 
 interface Event {
@@ -11,12 +11,14 @@ interface Event {
   description?: string
   eventDate: string
   shareLink: string
+  revealLink: string
   status: string
   createdAt: string
 }
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([])
+  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showNewEventForm, setShowNewEventForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -82,6 +84,15 @@ export default function DashboardPage() {
 
   const getShareUrl = (shareLink: string) =>
     `${window.location.origin}/eventos/${shareLink}/mural`
+
+  const getRevealUrl = (revealLink: string) =>
+    `${window.location.origin}/revelacao/${revealLink}`
+
+  const handleCopyReveal = async (revealLink: string) => {
+    await navigator.clipboard.writeText(getRevealUrl(revealLink))
+    setCopiedId(revealLink)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   return (
     <div className="p-8">
@@ -239,6 +250,29 @@ export default function DashboardPage() {
                     marginSize={2}
                     className="mx-auto"
                   />
+                </div>
+
+                {/* Dois links, de propósito separados: o de cima circula entre
+                    quem vai deixar recado; o de baixo é a surpresa e só deve ir
+                    para o homenageado, porque abre com as animações tocando. */}
+                <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-pink-700">
+                    <Gift className="w-4 h-4" />
+                    <span className="text-xs font-semibold">Link da surpresa</span>
+                  </div>
+                  <p className="text-xs text-pink-800">
+                    Envie só para o homenageado — abre o mural com as animações.
+                  </p>
+                  <button
+                    onClick={() => handleCopyReveal(event.revealLink)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition text-sm font-medium"
+                  >
+                    {copiedId === event.revealLink ? (
+                      <><Check className="w-4 h-4" /> Copiado</>
+                    ) : (
+                      <><Copy className="w-4 h-4" /> Copiar link da surpresa</>
+                    )}
+                  </button>
                 </div>
 
                 <div className="flex gap-2">

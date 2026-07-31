@@ -67,18 +67,21 @@ export async function POST(request: NextRequest) {
         eventDate: new Date(eventDate),
         type: type || "birthday",
         shareLink: uuid(),
+        revealLink: uuid(),
         creatorId: user.id,
         animations: animations || [],
       },
     })
 
-    // Generate QR code URL
-    const muralUrl = `${process.env.APP_URL}/eventos/${event.shareLink}/mural`
+    const base = process.env.APP_URL ?? new URL(request.url).origin
 
     return NextResponse.json(
       {
         ...event,
-        muralUrl,
+        // Link de coleta: circula entre quem vai deixar recado.
+        muralUrl: `${base}/eventos/${event.shareLink}/mural`,
+        // Link de revelação: vai para o homenageado.
+        revealUrl: `${base}/revelacao/${event.revealLink}`,
       },
       { status: 201 }
     )

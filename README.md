@@ -75,8 +75,10 @@ Sem o `prisma generate`, não há client gerado — então `tsc`, `next build` e
 
 1. **Não existe cadastro aberto.** O **Master Admin** é criado pelo seed (`npx prisma db seed`, a partir das variáveis `SEED_ADMIN_*`) e entra em `/auth/login`
 2. No **Dashboard** (`/admin/dashboard`), cria eventos: título, data, tipo e animações (confetti, balões, fogos, papel picado)
-3. Cada evento gera um **link aleatório** e **QR code** automaticamente
-4. O link (`/eventos/[shareLink]/mural`) é público — visitantes **não precisam de login**
+3. Cada evento gera **dois links aleatórios** e um **QR code** automaticamente:
+   - **Link de coleta** (`/eventos/[shareLink]/mural`) — circula entre os colegas, que deixam recados. **Sem animações**, para não estragar a surpresa
+   - **Link da surpresa** (`/revelacao/[revealLink]`) — vai só para o homenageado. Abre o mural com as animações tocando, em modo somente-leitura (sem botão de deixar recado e sem arrastar postits)
+4. Ambos são públicos — ninguém **precisa de login** para abrir
 5. Visitantes escolhem cor + ícone do postit, escrevem nome e mensagem, e arrastam livremente pelo mural
 6. É possível **exportar o mural em PDF** a qualquer momento
 7. **Após 12h da criação, o evento e seus recados são apagados automaticamente** (limpeza "preguiçosa" a cada acesso + cron diário de segurança via Vercel Cron)

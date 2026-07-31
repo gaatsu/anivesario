@@ -13,6 +13,8 @@ interface PostitCardProps {
   icon?: string | null
   positionX: number
   positionY: number
+  /** No link de revelação o mural é só para ver — nada de arrastar. */
+  disabled?: boolean
 }
 
 export default function PostitCard({
@@ -23,9 +25,11 @@ export default function PostitCard({
   icon,
   positionX,
   positionY,
+  disabled = false,
 }: PostitCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
+    disabled,
   })
 
   const IconComponent = icon
@@ -48,7 +52,9 @@ export default function PostitCard({
       style={style}
       {...listeners}
       {...attributes}
-      className="w-48 min-h-48 p-4 rounded-lg shadow-md cursor-grab active:cursor-grabbing select-none hover:shadow-xl transition-shadow rotate-[-2deg] hover:rotate-0"
+      className={`w-48 min-h-48 p-4 rounded-lg shadow-md select-none hover:shadow-xl transition-shadow rotate-[-2deg] hover:rotate-0 ${
+        disabled ? "" : "cursor-grab active:cursor-grabbing"
+      }`}
     >
       {IconComponent && (
         <IconComponent className="w-6 h-6 mb-2 text-gray-700" />

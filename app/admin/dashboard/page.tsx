@@ -4,8 +4,9 @@ import Botao from "@/components/ui/Botao"
 import EstadoVazio from "@/components/ui/EstadoVazio"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus, Calendar, Share2, Trash2, Gift, Copy, Check } from "lucide-react"
+import { Plus, Calendar, ExternalLink, Pencil, Trash2, Gift, Users, Copy, Check } from "lucide-react"
 import { QRCodeCanvas } from "qrcode.react"
+import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
 import { ANIMACOES, TEMAS, TEMA_PADRAO, resolverTema } from "@/lib/themes"
 
 interface Event {
@@ -13,10 +14,24 @@ interface Event {
   title: string
   description?: string
   eventDate: string
+  type: string
+  animations: string[]
   shareLink: string
   revealLink: string
   status: string
   createdAt: string
+}
+
+/**
+ * `<input type="datetime-local">` só aceita "YYYY-MM-DDTHH:mm" em horário local;
+ * o que vem da API é ISO em UTC. Sem esta conversão, abrir a edição mostraria o
+ * campo vazio e salvar apagaria a data.
+ */
+function paraCampoDeData(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 // O formulário já nasce com as animações do tema padrão, para que criar um
@@ -34,6 +49,7 @@ export default function DashboardPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showNewEventForm, setShowNewEventForm] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [formData, setFormData] = useState(FORM_VAZIO)
 
   useEffect(() => {
@@ -52,24 +68,52 @@ export default function DashboardPage() {
     }
   }
 
-  const handleCreateEvent = async (e: React.FormEvent) => {
+  // Um formulário só para criar e editar: os campos são idênticos, e duplicá-los
+  // garantiria que um dia divergissem.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     try {
-      const res = await fetch("/api/eventos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+      const res = await fetch(
+        editandoId ? `/api/eventos/${editandoId}` : "/api/eventos",
+        {
+          method: editandoId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      )
 
       if (res.ok) {
-        setFormData(FORM_VAZIO)
-        setShowNewEventForm(false)
+        fecharFormulario()
         fetchEvents()
       }
     } catch (error) {
-      console.error("Error creating event:", error)
+      console.error("Error saving event:", error)
     }
+  }
+
+  const abrirCriacao = () => {
+    setEditandoId(null)
+    setFormData(FORM_VAZIO)
+    setShowNewEventForm(true)
+  }
+
+  const abrirEdicao = (event: Event) => {
+    setEditandoId(event.id)
+    setFormData({
+      title: event.title,
+      description: event.description ?? "",
+      eventDate: paraCampoDeData(event.eventDate),
+      type: event.type,
+      animations: [...(event.animations ?? [])],
+    })
+    setShowNewEventForm(true)
+  }
+
+  const fecharFormulario = () => {
+    setShowNewEventForm(false)
+    setEditandoId(null)
+    setFormData(FORM_VAZIO)
   }
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -109,7 +153,7 @@ export default function DashboardPage() {
           <p className="text-gray-600 mt-1">Crie e gerencie seus murais de recados</p>
         </div>
 
-        <Botao onClick={() => setShowNewEventForm(true)}>
+        <Botao onClick={abrirCriacao}>
           <Plus className="w-5 h-5" />
           Novo Evento
         </Botao>
@@ -117,9 +161,11 @@ export default function DashboardPage() {
 
       {showNewEventForm && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8 max-w-2xl">
-          <h2 className="text-2xl font-bold mb-6">Criar Novo Evento</h2>
+          <h2 className="text-2xl font-bold mb-6">
+            {editandoId ? "Editar Evento" : "Criar Novo Evento"}
+          </h2>
 
-          <form onSubmit={handleCreateEvent} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nome do homenageado
@@ -223,12 +269,12 @@ export default function DashboardPage() {
 
             <div className="flex gap-4">
               <Botao type="submit" className="flex-1">
-                Criar Evento
+                {editandoId ? "Salvar alterações" : "Criar Evento"}
               </Botao>
               <Botao
                 type="button"
                 variante="secundario"
-                onClick={() => setShowNewEventForm(false)}
+                onClick={fecharFormulario}
                 className="flex-1"
               >
                 Cancelar
@@ -253,7 +299,13 @@ export default function DashboardPage() {
           {events.map((event) => (
             <div key={event.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition">
               <div className="p-6 space-y-4">
-                <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
+                  <p className="text-apoio text-gray-600">
+                    {resolverTema(event.type).label} · abre com “
+                    {resolverTema(event.type).saudacao}, {event.title}”
+                  </p>
+                </div>
                 <p className="text-sm text-gray-600">{event.description}</p>
 
                 {/* Dois QR codes, sempre rotulados: entregar o da surpresa a um
@@ -284,25 +336,49 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Dois links, de propósito separados: o de cima circula entre
-                    quem vai deixar recado; o de baixo é a surpresa e só deve ir
-                    para o homenageado, porque abre com as animações tocando. */}
+                {/* Dois links, de propósito separados, e cada um com o próprio
+                    botão de compartilhar: o de cima circula entre quem vai
+                    deixar recado; o de baixo é a surpresa e só deve ir para o
+                    homenageado, porque abre com as animações tocando. Um botão
+                    só, genérico, mandaria o link errado no grupo errado. */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Users className="w-4 h-4" />
+                    <span className="text-xs font-semibold">Link de coleta</span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Mande no grupo — é onde os colegas escrevem.
+                  </p>
+                  <BotaoCompartilhar
+                    url={getShareUrl(event.shareLink)}
+                    texto={`${resolverTema(event.type).convite} ${event.title}:`}
+                    rotulo="Enviar para os colegas"
+                    className="w-full bg-gray-700 text-white hover:bg-gray-800"
+                  />
+                </div>
+
                 <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2 text-pink-700">
                     <Gift className="w-4 h-4" />
                     <span className="text-xs font-semibold">Link da surpresa</span>
                   </div>
                   <p className="text-xs text-pink-800">
-                    Envie só para o homenageado — abre o mural com as animações.
+                    Envie só para {event.title} — abre o mural com as animações.
                   </p>
+                  <BotaoCompartilhar
+                    url={getRevealUrl(event.revealLink)}
+                    texto={`${event.title}, tem uma surpresa esperando por você:`}
+                    rotulo="Enviar a surpresa"
+                    className="w-full bg-pink-600 text-white hover:bg-pink-700"
+                  />
                   <button
                     onClick={() => handleCopyReveal(event.revealLink)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition text-sm font-medium"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-pink-700 hover:bg-pink-100 rounded-lg transition text-xs font-medium"
                   >
                     {copiedId === event.revealLink ? (
                       <><Check className="w-4 h-4" /> Copiado</>
                     ) : (
-                      <><Copy className="w-4 h-4" /> Copiar link da surpresa</>
+                      <><Copy className="w-4 h-4" /> Copiar link</>
                     )}
                   </button>
                 </div>
@@ -313,12 +389,21 @@ export default function DashboardPage() {
                     target="_blank"
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-sm font-medium"
                   >
-                    <Share2 className="w-4 h-4" />
-                    Compartilhar
+                    <ExternalLink className="w-4 h-4" />
+                    Abrir mural
                   </Link>
 
                   <button
+                    onClick={() => abrirEdicao(event)}
+                    title="Editar evento"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => handleDeleteEvent(event.id)}
+                    title="Excluir evento"
                     className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
                   >
                     <Trash2 className="w-4 h-4" />

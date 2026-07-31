@@ -11,7 +11,10 @@ export default async function Home() {
         <div className="text-center space-y-8 max-w-2xl">
           <div className="inline-flex items-center gap-3 justify-center">
             <PartyPopper className="w-10 h-10 text-pink-500" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+            {/* bg-pink-600 é fallback: se o gradiente (background-image) não
+                pintar, a cor de fundo ainda é recortada no texto, em vez de ele
+                sumir por completo com text-transparent. */}
+            <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
               Bem-vindo, {user.name}!
             </h1>
             <Gift className="w-10 h-10 text-yellow-500" />
@@ -77,7 +80,7 @@ export default async function Home() {
           </Link>
         </div>
 
-        <p className="text-sm text-gray-500 max-w-md mx-auto">
+        <p className="text-sm text-gray-600 max-w-md mx-auto">
           ✨ Compartilhe links sem necessidade de login, escolha postits coloridos, arraste livremente e exporte como PDF
         </p>
       </div>

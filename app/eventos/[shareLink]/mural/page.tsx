@@ -114,7 +114,9 @@ export default function MuralPage() {
 
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+          {/* bg-pink-600 é fallback: sem uma cor de fundo por baixo, se o
+              gradiente não pintar o título some por completo. */}
+          <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
             {event.title}
           </h1>
           {event.description && (

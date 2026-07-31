@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+/* O app tem tema claro fixo (gradientes rosa/roxo, cards brancos) e nenhuma
+   variante de dark mode. Declarar color-scheme impede o navegador de pintar
+   controles nativos com as cores escuras do sistema. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/* This app uses a fixed light theme (pink/purple gradients, white cards) —
-   no dark-mode variants exist for it, so we don't invert on system
-   preference. Without this, text with no explicit Tailwind color class
-   (e.g. typed input text) inherits near-white from prefers-color-scheme
-   and becomes invisible on the light backgrounds used everywhere. */
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Dentro de @layer base de propósito. Estas mesmas regras estavam fora de
+   qualquer layer, e CSS sem layer vence CSS em layer — então elas silenciosamente
+   anulavam as utilities do Tailwind v4: o font-family matava o Geist carregado
+   pelo next/font, e o background matava o gradiente do <body>. */
+@layer base {
+  body {
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
 }

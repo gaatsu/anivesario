@@ -69,7 +69,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
       <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full space-y-4 relative">
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
         >
           <X className="w-6 h-6" />
         </button>
@@ -93,7 +93,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
               onChange={(e) => setName(e.target.value)}
               placeholder="Seu nome"
               maxLength={100}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               required
             />
           </div>
@@ -107,10 +107,10 @@ export default function PostitForm({ shareLink, onSuccess, onCancel }: PostitFor
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Escreva seu recado..."
               maxLength={500}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent h-28"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent h-28"
               required
             />
-            <p className="text-xs text-gray-400 text-right mt-1">{message.length}/500</p>
+            <p className="text-xs text-gray-600 text-right mt-1">{message.length}/500</p>
           </div>
 
           <div>

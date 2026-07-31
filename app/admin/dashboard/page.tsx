@@ -249,14 +249,32 @@ export default function DashboardPage() {
                 <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
                 <p className="text-sm text-gray-600">{event.description}</p>
 
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <QRCodeCanvas
-                    value={getShareUrl(event.shareLink)}
-                    size={120}
-                    level="H"
-                    marginSize={2}
-                    className="mx-auto"
-                  />
+                {/* Dois QR codes, sempre rotulados: entregar o da surpresa a um
+                    colega — ou o de coleta ao homenageado — estraga o efeito. */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 border border-gray-200 p-2 rounded-lg text-center">
+                    <QRCodeCanvas
+                      value={getShareUrl(event.shareLink)}
+                      size={96}
+                      level="H"
+                      marginSize={2}
+                      className="mx-auto"
+                    />
+                    <p className="text-apoio font-medium text-gray-700 mt-2">Para os colegas</p>
+                    <p className="text-xs text-gray-600">deixar recado</p>
+                  </div>
+
+                  <div className="bg-pink-50 border border-pink-200 p-2 rounded-lg text-center">
+                    <QRCodeCanvas
+                      value={getRevealUrl(event.revealLink)}
+                      size={96}
+                      level="H"
+                      marginSize={2}
+                      className="mx-auto"
+                    />
+                    <p className="text-apoio font-medium text-pink-800 mt-2">Para o homenageado</p>
+                    <p className="text-xs text-pink-700">a surpresa</p>
+                  </div>
                 </div>
 
                 {/* Dois links, de propósito separados: o de cima circula entre

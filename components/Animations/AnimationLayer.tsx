@@ -94,11 +94,17 @@ export default function AnimationLayer({ animations, cores }: AnimationLayerProp
 
   return (
     <>
-      {/* Atrás do conteúdo e translúcido: o ambiente nunca cobre um recado. */}
+      {/* Acima do conteúdo, não atrás. Atrás só funcionava no desktop, onde o
+          card do mural é centralizado e sobra margem lateral para as partículas
+          aparecerem; no celular o card ocupa a largura inteira e engolia a
+          animação toda. A opacidade baixa — e mais baixa ainda no ambiente — é o
+          que impede de atrapalhar a leitura. */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 h-full w-full opacity-45"
+        className={`pointer-events-none fixed inset-0 z-20 h-full w-full transition-opacity duration-1000 ${
+          fase === "celebracao" ? "opacity-80" : "opacity-30"
+        }`}
       />
 
       {visivel &&

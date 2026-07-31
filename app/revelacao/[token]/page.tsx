@@ -114,8 +114,8 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
         <AnimationLayer animations={event.animations} cores={PALETA_ANIMACAO[tema.id]} />
       )}
 
-      {/* relative z-0 dá contexto de empilhamento próprio: o canvas usa -z-10, e
-          sem isto a ordem dependeria do DOM em vez de ser explícita. */}
+      {/* relative z-0 fixa o conteúdo num nível explícito; as camadas de
+          animação ficam acima dele, em z-20, com opacidade baixa. */}
       <div className="relative z-0 max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           {/* Cor sólida do tema em vez do gradiente com bg-clip-text: além de

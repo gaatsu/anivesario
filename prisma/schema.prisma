@@ -7,13 +7,14 @@ generator client {
   output   = "../generated/prisma"
 }
 
-// id matches the Neon Auth user id (not generated here) — Neon Auth owns
-// credentials and sessions; this table only tracks app-level roles.
+// Credenciais moram aqui: passwordHash guarda um hash scrypt (ver lib/auth.ts).
+// Contas nascem só pelo seed ou pelo resgate de um convite — não há cadastro aberto.
 model User {
-  id        String   @id
-  email     String   @unique
-  name      String
-  role      UserRole @default(ADMIN)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(ADMIN)
 
   events    Event[]
   delegates Delegate[] @relation("MasterAdmin")
@@ -79,22 +80,25 @@ model Postit {
   @@index([eventId])
 }
 
+// Convite por link: o master admin gera um token aleatório e envia a URL. Quem
+// abrir define a própria senha. Uso único — um token ACCEPTED nunca mais vale.
 model Delegate {
   id        String   @id @default(cuid())
+  token     String   @unique
+  label     String?
 
   creatorId String
   creator   User     @relation("MasterAdmin", fields: [creatorId], references: [id], onDelete: Cascade)
 
-  delegateEmail String
-  delegateId    String?
-  delegateUser  User?   @relation("DelegateUser", fields: [delegateId], references: [id], onDelete: SetNull)
+  delegateId   String? @unique
+  delegateUser User?   @relation("DelegateUser", fields: [delegateId], references: [id], onDelete: SetNull)
 
   status    DelegateStatus @default(PENDING)
+  expiresAt DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([creatorId, delegateEmail])
   @@index([creatorId])
 }
 

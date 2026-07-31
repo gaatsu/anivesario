@@ -61,6 +61,35 @@ npm run dev
 
 Abra http://localhost:3000
 
+## Temas e animações
+
+Cada tipo de evento é um objeto em `lib/themes.ts` — paleta, cor de acento, ícones
+sugeridos e animações padrão. Acrescentar um tipo é acrescentar um objeto; nenhuma
+tela precisa ser editada, e não há migration porque `Event.type` já é `String`.
+
+| Tipo | Identidade | Animações padrão |
+|---|---|---|
+| Aniversário | rosa/roxo | confetti + balões |
+| Despedida | azul/índigo | pétalas |
+| Boas-vindas | verde/ciano | confetti ascendente + estrelas |
+| Conquista | dourado/âmbar | fogos + estrelas |
+
+**Aparência dos postits.** Cor, inclinação e textura saem de um hash do nome de
+quem escreveu, dentro da faixa de matiz do tema (`lib/postit-visual.ts`). O mesmo
+nome gera sempre o mesmo postit. A cor é gerada em **OKLCH**, não HSL: em HSL a
+luminosidade não é perceptualmente uniforme, então amarelo e azul com o mesmo `L`
+dariam contrastes de leitura diferentes para o texto do recado. Quem escolher uma
+cor à mão no formulário sobrepõe a automática.
+
+**Duas fases.** Ao abrir o link da surpresa há uma celebração forte de ~2,5s, que
+decai para um movimento de fundo contínuo enquanto a pessoa lê. O canvas roda em
+Web Worker, fica atrás do conteúdo, congela quando a aba perde o foco e é
+desligado por completo sob `prefers-reduced-motion`.
+
+Os ids das animações e dos tipos são **estáveis em inglês** (`birthday`,
+`confetti`…) porque há dados gravados; `confetti_paper` é alias histórico de
+`petals`.
+
 ## Rodando atrás de proxy corporativo
 
 Em redes que bloqueiam portas de banco e interceptam TLS (o caso da rede onde este projeto foi montado), três coisas quebram:

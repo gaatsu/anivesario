@@ -11,6 +11,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // Roda com o Node puro (type stripping nativo) em vez de tsx: o tsx arrasta o
+    // esbuild, cujo binário o EDR desta máquina bloqueia, quebrando o npm install.
+    seed: "node --experimental-strip-types prisma/seed.ts",
   },
   datasource: {
     // Migrations run better against Neon's direct (non-pooled) connection;

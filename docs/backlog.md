@@ -27,7 +27,52 @@ então os deploys dele são de produção, não preview. Duas causas possíveis:
 
 ## Features
 
-### 1. Formatos de postit (maior impacto visual)
+### 0. Fundo com textura de papel
+
+**Independente de tudo o mais e barato.** Hoje o fundo é `slate-50`/`slate-100`,
+frio e sem textura, o que destoa de um app sobre murais de recado.
+
+Referência: `C:\anivesario\Carrossel Example\main.css`. Duas camadas:
+
+1. Radial gradient cor de papel — `#f8f3e7` → `#f2ead6` → `#e9dec3`
+2. **Camada de grão**: ruído SVG via `feTurbulence`, `opacity: 0.06`,
+   `mix-blend-mode: multiply`, como data-URI inline — sem requisição, sem imagem
+
+O grão funciona por cima de qualquer paleta, então cada tema de evento pode ter o
+próprio fundo e o grão unifica visualmente.
+
+**A decidir:** o fundo de papel vale para a moldura sóbria (admin/login) também,
+ou só para as telas de mural?
+
+### 1. Carrossel de fotos na revelação
+
+Cards de foto espalhados, cada um com posição e rotação próprias. **Não é um
+carrossel de slides** — é uma composição com quatro comportamentos: entrada
+escalonada a partir do centro, flutuação contínua em loop, parallax seguindo o
+mouse (cada card com sua profundidade) e inclinação 3D no hover.
+
+Referência: `C:\anivesario\Carrossel Example\` (`.cards-row` / `.card`).
+
+**Decidido:**
+- Armazenamento: **Vercel Blob** (1GB no free). Upload no formulário de criação de
+  evento, com preview antes de salvar.
+- Aparece **só na revelação** — as fotos são parte da surpresa.
+- Reimplementar em **framer-motion**, não GSAP: o exemplo usa GSAP + ScrollTrigger
+  via CDN, e o framer-motion (já instalado) faz tudo isso. Evita dependência nova
+  num ambiente onde `npm install` já quebrou duas vezes pelo EDR.
+
+**Em aberto:**
+- **Quantas fotos no máximo?** O exemplo tem 8 cards com posições fixas no CSS.
+  Com quantidade variável, as posições precisam ser calculadas — ou fixamos um
+  teto e um layout por quantidade.
+- **Limite de tamanho e compressão** antes do upload.
+- **Parallax não existe no celular.** Fallback: só a flutuação contínua, ou
+  giroscópio?
+- **Limpeza dos blobs.** Eventos se apagam em 12h; as imagens precisam ser
+  apagadas junto, no `deleteEventIfExpired` e no cron, senão vaza storage. É o
+  ponto mais fácil de esquecer.
+
+### 2. Formatos de postit (maior impacto visual)
 
 Hoje há três texturas procedurais (`liso`, `listrado`, `pontilhado`) em
 `lib/postit-visual.ts`, todas sutis demais para se notar. Trocar por **formatos**,
@@ -50,7 +95,7 @@ Tudo em CSS, sem imagem e sem requisição. Referências:
 **A decidir:** os formatos são sorteados por autor (como cor e inclinação) ou
 definidos pelo tema do evento?
 
-### 2. Fontes de caligrafia nos recados
+### 3. Fontes de caligrafia nos recados
 
 Sortear entre 2–3 fontes manuscritas **pelo hash do nome do autor**, para que cada
 recado pareça escrito por uma pessoa diferente — que é literalmente o caso. A
@@ -69,7 +114,7 @@ Todas no Google Fonts, compatíveis com `next/font`. Referências:
 **Atenção:** cada fonte extra pesa no bundle e no tempo de build. Avaliar se 3
 fontes se justificam ou se 2 bastam.
 
-### 3. Revelação em cascata
+### 4. Revelação em cascata
 
 Hoje, ao abrir o link da surpresa, os postits **já estão lá** e a animação é a
 única coisa que acontece. Fazê-los aparecer **um a um**, em sequência, transforma
@@ -81,7 +126,7 @@ em vez de todos de uma vez ([Duolingo streak animation](https://blog.duolingo.co
 **Cuidado:** com 30 recados, uma cascata lenta vira espera. Precisa de teto de
 duração total.
 
-### 4. Intensidade escalonada por volume de recados
+### 5. Intensidade escalonada por volume de recados
 
 A recomendação corrente é intensidade em camadas — conquistas pequenas merecem
 aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fixa.
@@ -89,13 +134,13 @@ aceno discreto, grandes merecem festa. Hoje a intensidade da celebração é fix
 **Um mural com 30 recados deveria estourar mais que um com 2.** Barato de fazer e
 dá significado à animação.
 
-### 5. Vibração no celular (haptics)
+### 6. Vibração no celular (haptics)
 
 `navigator.vibrate()` na abertura da revelação, como complemento — e como
 alternativa para quem está com movimento reduzido, já que haptics podem substituir
 feedback visual.
 
-### 6. Fallback estático sob `prefers-reduced-motion`
+### 7. Fallback estático sob `prefers-reduced-motion`
 
 **Motivado por problema real.** Hoje suprimimos 100% das animações sob
 `prefers-reduced-motion`, e isso mordeu duas vezes durante os testes: o Windows do

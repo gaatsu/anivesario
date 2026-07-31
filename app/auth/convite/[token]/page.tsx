@@ -77,7 +77,7 @@ export default function ConvitePage({ params }: { params: Promise<{ token: strin
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
             </div>
@@ -92,7 +92,7 @@ export default function ConvitePage({ params }: { params: Promise<{ token: strin
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ export default function ConvitePage({ params }: { params: Promise<{ token: strin
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="mínimo 8 caracteres"
                 minLength={8}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
             </div>
@@ -124,7 +124,7 @@ export default function ConvitePage({ params }: { params: Promise<{ token: strin
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="repita a senha"
                 minLength={8}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
             </div>
@@ -133,7 +133,7 @@ export default function ConvitePage({ params }: { params: Promise<{ token: strin
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? "Criando..." : (
               <>

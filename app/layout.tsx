@@ -13,9 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aniversário | Murais de Recados",
-  description: "Crie murais de recados personalizados para aniversários, férias e eventos",
-  icons: { icon: "🎉" },
+  title: "Mensagens Corp.",
+  description:
+    "Murais de recados para aniversários, despedidas, boas-vindas e conquistas do time",
+  icons: { icon: "💬" },
 };
 
 export default function RootLayout({

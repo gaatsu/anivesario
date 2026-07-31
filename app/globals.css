@@ -5,6 +5,15 @@
   --color-foreground: #171717;
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
+
+  /* Escala tipográfica nomeada por papel, não por tamanho: antes cada tela
+     escolhia text-3xl ou text-xl por conta própria e elas foram divergindo. */
+  --text-titulo: 1.875rem;
+  --text-titulo--line-height: 2.25rem;
+  --text-seccao: 1.25rem;
+  --text-seccao--line-height: 1.75rem;
+  --text-apoio: 0.8125rem;
+  --text-apoio--line-height: 1.25rem;
 }
 
 /* O app tem tema claro fixo (gradientes rosa/roxo, cards brancos) e nenhuma

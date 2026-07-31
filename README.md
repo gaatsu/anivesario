@@ -1,6 +1,8 @@
-# 🎉 Murais de Recados
+# 💬 Mensagens Corp.
 
-App para criar murais de recados/mensagens personalizados para aniversários, retorno de férias e eventos especiais. Visitantes deixam recados em postits coloridos sem precisar de login, com drag livre pelo mural.
+Murais de recados para os momentos do time: **aniversários, despedidas, boas-vindas e conquistas**. Os colegas deixam recados em postits sem precisar de login, arrastando livremente pelo mural; o homenageado recebe um link separado que abre o mural em clima de festa.
+
+Cada tipo de evento tem paleta, ícones e animações próprios, e cada postit ganha cor e inclinação derivadas do nome de quem escreveu — o mural fica coeso sem que dois recados fiquem iguais.
 
 ## Stack
 

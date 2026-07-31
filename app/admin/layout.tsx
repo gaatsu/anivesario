@@ -17,14 +17,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen flex bg-gray-50">
       <aside className="w-64 bg-white shadow-lg flex flex-col">
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-pink-600">🎉 Aniversário</h2>
+          <h2 className="text-2xl font-bold text-indigo-700">💬 Mensagens Corp.</h2>
           <p className="text-xs text-gray-600 mt-1">{user.email}</p>
         </div>
 
         <nav className="p-4 space-y-2">
           <Link href="/admin/dashboard"
             className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
-            <LayoutDashboard className="w-5 h-5 text-pink-500" />
+            <LayoutDashboard className="w-5 h-5 text-indigo-600" />
             <span className="font-medium">Dashboard</span>
           </Link>
 

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { getCurrentUser } from "@/lib/current-user"
-import { Cake, Gift, PartyPopper } from "lucide-react"
+import { LayoutDashboard, Users } from "lucide-react"
+import { TEMAS } from "@/lib/themes"
 
 export default async function Home() {
   const user = await getCurrentUser()
@@ -9,35 +10,32 @@ export default async function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center space-y-8 max-w-2xl">
-          <div className="inline-flex items-center gap-3 justify-center">
-            <PartyPopper className="w-10 h-10 text-pink-500" />
-            {/* bg-pink-600 é fallback: se o gradiente (background-image) não
-                pintar, a cor de fundo ainda é recortada no texto, em vez de ele
-                sumir por completo com text-transparent. */}
-            <h1 className="text-4xl font-bold bg-pink-600 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-              Bem-vindo, {user.name}!
-            </h1>
-            <Gift className="w-10 h-10 text-yellow-500" />
-          </div>
+          <h1 className="text-titulo font-bold text-gray-900">
+            Bem-vindo, {user.name}
+          </h1>
 
           <p className="text-xl text-gray-600">
-            Crie murais de recados memoráveis para seus eventos especiais
+            Crie murais de recados para os momentos do seu time
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link href="/admin/dashboard"
-              className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-              <Cake className="w-8 h-8 text-pink-500 mx-auto mb-3" />
-              <h2 className="font-semibold text-lg mb-2">Dashboard</h2>
+            <Link
+              href="/admin/dashboard"
+              className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <LayoutDashboard className="w-8 h-8 text-indigo-600 mx-auto mb-3" />
+              <h2 className="font-semibold text-lg mb-1 text-gray-900">Dashboard</h2>
               <p className="text-sm text-gray-600">Gerenciar seus eventos e murais</p>
             </Link>
 
             {user.role === "MASTER_ADMIN" && (
-              <Link href="/admin/delegados"
-                className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                <Gift className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-                <h2 className="font-semibold text-lg mb-2">Delegados</h2>
-                <p className="text-sm text-gray-600">Gerenciar admin delegados</p>
+              <Link
+                href="/admin/delegados"
+                className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Users className="w-8 h-8 text-indigo-600 mx-auto mb-3" />
+                <h2 className="font-semibold text-lg mb-1 text-gray-900">Delegados</h2>
+                <p className="text-sm text-gray-600">Convidar outros administradores</p>
               </Link>
             )}
           </div>
@@ -50,38 +48,42 @@ export default async function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="text-center space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-5xl font-bold mb-4">
-            🎉 Murais de Recados
-          </h1>
+          <h1 className="text-5xl font-bold mb-4 text-gray-900">💬 Mensagens Corp.</h1>
           <p className="text-xl text-gray-600">
-            Crie murais interativos e memoráveis para aniversários, férias e eventos especiais
+            Murais de recados para aniversários, despedidas, boas-vindas e conquistas do time
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
-          <div className="p-4 bg-pink-50 rounded-lg">
-            <Cake className="w-8 h-8 text-pink-500 mx-auto mb-2" />
-            <p className="font-semibold">Aniversários</p>
-          </div>
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <Gift className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <p className="font-semibold">Eventos</p>
-          </div>
-          <div className="p-4 bg-yellow-50 rounded-lg">
-            <PartyPopper className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-            <p className="font-semibold">Celebrações</p>
-          </div>
+        {/* Os quatro tipos vêm do registry: acrescentar um tema aqui não exige
+            editar esta página. */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-8">
+          {Object.values(TEMAS).map((tema) => (
+            <div
+              key={tema.id}
+              className="p-4 bg-white rounded-lg border border-gray-200"
+            >
+              <span
+                className="block w-8 h-8 rounded-full mx-auto mb-2"
+                style={{ backgroundColor: tema.acento }}
+                aria-hidden="true"
+              />
+              <p className="font-semibold text-sm text-gray-900">{tema.label}</p>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/auth/login"
-            className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold hover:shadow-lg transition-shadow">
+          <Link
+            href="/auth/login"
+            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition"
+          >
             Entrar
           </Link>
         </div>
 
-        <p className="text-sm text-gray-600 max-w-md mx-auto">
-          ✨ Compartilhe links sem necessidade de login, escolha postits coloridos, arraste livremente e exporte como PDF
+        <p className="text-apoio text-gray-600 max-w-md mx-auto">
+          Quem deixa recado não precisa de login. O homenageado recebe um link separado, que abre
+          o mural em clima de festa.
         </p>
       </div>
     </div>

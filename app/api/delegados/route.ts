@@ -1,31 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/current-user"
+import { generateInviteToken, INVITE_TTL_MS } from "@/lib/invites"
 import { db } from "@/lib/db"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getCurrentUser()
 
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    if (!user || user.role !== "MASTER_ADMIN") {
+      return NextResponse.json({ message: "Apenas o master admin gerencia delegados" }, { status: 403 })
     }
 
+    // O token nem é lido do banco: quem gerou o link já o recebeu na resposta do
+    // POST, e reexpô-lo numa listagem daria a qualquer sessão vazada acesso aos
+    // convites pendentes.
     const delegates = await db.delegate.findMany({
-      where: {
-        creatorId: user.id,
+      where: { creatorId: user.id },
+      select: {
+        id: true,
+        label: true,
+        status: true,
+        expiresAt: true,
+        createdAt: true,
+        delegateUser: { select: { name: true, email: true } },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json(delegates)
+    const agora = new Date()
+    return NextResponse.json(
+      delegates.map((d) => ({ ...d, expired: d.status === "PENDING" && d.expiresAt < agora }))
+    )
   } catch (error) {
     console.error("Error fetching delegates:", error)
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -34,52 +42,34 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user || user.role !== "MASTER_ADMIN") {
-      return NextResponse.json(
-        { message: "Only master admins can add delegates" },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: "Apenas o master admin gera convites" }, { status: 403 })
     }
 
-    const { delegateEmail } = await request.json()
-
-    if (!delegateEmail) {
-      return NextResponse.json(
-        { message: "Email is required" },
-        { status: 400 }
-      )
-    }
-
-    // Check if delegate already exists
-    const existing = await db.delegate.findFirst({
-      where: {
-        creatorId: user.id,
-        delegateEmail,
-      },
-    })
-
-    if (existing) {
-      return NextResponse.json(
-        { message: "Delegate already added" },
-        { status: 409 }
-      )
-    }
+    const { label } = await request.json().catch(() => ({}))
+    const token = generateInviteToken()
 
     const delegate = await db.delegate.create({
       data: {
+        token,
+        label: typeof label === "string" && label.trim() ? label.trim() : null,
         creatorId: user.id,
-        delegateEmail,
-        status: "PENDING",
+        expiresAt: new Date(Date.now() + INVITE_TTL_MS),
       },
     })
 
-    // TODO: Send email invitation
+    const base = process.env.APP_URL ?? new URL(request.url).origin
 
-    return NextResponse.json(delegate, { status: 201 })
-  } catch (error) {
-    console.error("Error creating delegate:", error)
     return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
+      {
+        id: delegate.id,
+        label: delegate.label,
+        expiresAt: delegate.expiresAt,
+        url: `${base}/auth/convite/${token}`,
+      },
+      { status: 201 }
     )
+  } catch (error) {
+    console.error("Error creating delegate invite:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

@@ -13,31 +13,35 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/auth/login")
   }
 
+  // Coluna no celular, lateral a partir de sm: um aside de 256px fixos deixava
+  // 134px de conteúdo numa tela de 390.
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-white shadow-lg flex flex-col">
-        <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-indigo-700">💬 Mensagens Corp.</h2>
+    <div className="min-h-screen flex flex-col sm:flex-row bg-gray-50">
+      <aside className="w-full sm:w-64 bg-white shadow-lg flex flex-col shrink-0">
+        <div className="p-4 sm:p-6 border-b">
+          <h2 className="text-seccao sm:text-2xl font-bold text-indigo-700">💬 Mensagens Corp.</h2>
           <p className="text-xs text-gray-600 mt-1">{user.email}</p>
         </div>
 
-        <nav className="p-4 space-y-2">
+        {/* Lado a lado no celular, empilhado no desktop: no telefone a barra
+            precisa ser fina para não empurrar o conteúdo para baixo da dobra. */}
+        <nav className="flex sm:flex-col gap-2 p-3 sm:p-4">
           <Link href="/admin/dashboard"
-            className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+            className="flex flex-1 sm:flex-none items-center gap-3 px-4 py-3 sm:py-2 rounded-lg hover:bg-gray-100 transition">
             <LayoutDashboard className="w-5 h-5 text-indigo-600" />
             <span className="font-medium">Dashboard</span>
           </Link>
 
           {user.role === "MASTER_ADMIN" && (
             <Link href="/admin/delegados"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+              className="flex flex-1 sm:flex-none items-center gap-3 px-4 py-3 sm:py-2 rounded-lg hover:bg-gray-100 transition">
               <Users className="w-5 h-5 text-purple-500" />
               <span className="font-medium">Delegados</span>
             </Link>
           )}
         </nav>
 
-        <div className="mt-auto p-6">
+        <div className="mt-auto p-4 sm:p-6">
           <LogoutButton />
         </div>
       </aside>

@@ -49,6 +49,8 @@ interface PostitCardProps {
   positionY: number
   /** No link de revelação o mural é só para ver — nada de arrastar. */
   disabled?: boolean
+  /** Mural livre (desktop) posiciona por coordenada; no celular vira coluna. */
+  livre?: boolean
   tema: Tema
 }
 
@@ -62,6 +64,7 @@ export default function PostitCard({
   positionX,
   positionY,
   disabled = false,
+  livre = true,
   tema,
 }: PostitCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -92,17 +95,31 @@ export default function PostitCard({
   return (
     <div
       ref={setNodeRef}
-      style={{
-        position: "absolute",
-        left: positionX,
-        top: positionY,
-        width: larguraDoPostit(name),
-        transform: CSS.Translate.toString(transform),
-        // Inclinação por autor, em vez do -2° fixo que deixava todos idênticos.
-        rotate: `${inclinacaoDoPostit(name)}deg`,
-        zIndex: isDragging ? 50 : 1,
-        touchAction: "none",
-      }}
+      style={
+        livre
+          ? {
+              position: "absolute",
+              left: positionX,
+              top: positionY,
+              width: larguraDoPostit(name),
+              transform: CSS.Translate.toString(transform),
+              // Inclinação por autor, em vez do -2° fixo que deixava todos idênticos.
+              rotate: `${inclinacaoDoPostit(name)}deg`,
+              zIndex: isDragging ? 50 : 1,
+              touchAction: "none",
+            }
+          : {
+              // Na coluna a largura é da tela, não do hash — 224px fixos num
+              // celular de 390 deixariam os recados desalinhados entre si.
+              // A inclinação fica, porque é ela que impede a coluna de parecer
+              // uma tabela.
+              width: "100%",
+              // 300 e não a largura da tela: um recado de 390px de largura por 200 de
+              // altura lê como faixa, não como papel colado.
+              maxWidth: 300,
+              rotate: `${inclinacaoDoPostit(name) * 0.6}deg`,
+            }
+      }
       {...listeners}
       {...attributes}
       className={`select-none ${disabled ? "" : "cursor-grab active:cursor-grabbing"}`}
@@ -152,7 +169,7 @@ export default function PostitCard({
           color: corTexto,
           fontFamily: fonte.familia,
         }}
-        className="flex min-h-44 flex-col justify-between px-6 py-5 transition-shadow"
+        className="flex min-h-52 flex-col justify-between px-5 py-4 transition-shadow sm:min-h-44 sm:px-6 sm:py-5"
       >
         <div>
           {IconComponent && (

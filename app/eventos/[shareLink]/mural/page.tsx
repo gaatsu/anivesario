@@ -122,7 +122,7 @@ export default function MuralPage() {
           </p>
           {/* Cor sólida do tema em vez do gradiente com bg-clip-text: segue a
               identidade do evento e não tem como renderizar invisível. */}
-          <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-balance" style={{ color: tema.acento }}>
             {event.title}
           </h1>
           {event.description && (

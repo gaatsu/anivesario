@@ -179,10 +179,10 @@ export default function DashboardPage() {
     `${window.location.origin}/revelacao/${revealLink}`
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Meus Eventos</h1>
+          <h1 className="text-titulo font-bold text-gray-900">Meus Eventos</h1>
           <p className="text-gray-600 mt-1">Crie e gerencie seus murais de recados</p>
         </div>
 
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       </div>
 
       {showNewEventForm && (
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 max-w-2xl">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 mb-8 max-w-2xl">
           <h2 className="text-2xl font-bold mb-6">
             {editandoId ? "Editar Evento" : "Criar Novo Evento"}
           </h2>
@@ -232,7 +232,7 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Data
@@ -307,7 +307,7 @@ export default function DashboardPage() {
               onRemoverSalva={removerFotoSalva}
             />
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Botao type="submit" className="flex-1" disabled={salvando}>
                 {salvando
                   ? "Salvando..."

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caveat, Geist, Geist_Mono, Kalam } from "next/font/google";
 import "./globals.css";
 
@@ -35,6 +35,13 @@ export const metadata: Metadata = {
   description:
     "Murais de recados para aniversários, despedidas, boas-vindas e conquistas do time",
   icons: { icon: "💬" },
+};
+
+// A barra do navegador no celular assume a cor do papel, para o app não ter
+// uma faixa branca ou preta destoando no topo.
+export const viewport: Viewport = {
+  themeColor: "#f2ead6",
+  colorScheme: "light",
 };
 
 export default function RootLayout({

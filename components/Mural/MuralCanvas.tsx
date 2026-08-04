@@ -4,6 +4,7 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core"
 import { useEffect, useState } from "react"
 import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
+import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
 
 interface Postit {
   id: string
@@ -35,12 +36,18 @@ export default function MuralCanvas({
 }: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
 
+  // No celular os recados viram uma coluna legível e arrastar sai de cena.
+  // Não é degradação: posições em pixel vindas de um mural de 600px não cabem
+  // numa tela de 390, e arrastar com o dedo num canvas maior que a tela seria
+  // briga com a rolagem da página.
+  const muralLivre = useMediaQuery(ACIMA_DE_CELULAR)
+
   useEffect(() => {
     setLocalPostits(postits)
   }, [postits])
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    if (readOnly || !shareLink) return
+    if (readOnly || !shareLink || !muralLivre) return
 
     const { active, delta } = event
     const postitId = active.id as string
@@ -72,7 +79,13 @@ export default function MuralCanvas({
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="relative w-full min-h-[600px] rounded-2xl bg-[url('/cork-texture.png')] bg-cover">
+      <div
+        className={`w-full rounded-2xl bg-[url('/cork-texture.png')] bg-cover ${
+          muralLivre
+            ? "relative min-h-[600px]"
+            : "flex flex-col items-center gap-6 px-2 py-6"
+        }`}
+      >
         {localPostits.map((postit) => (
           <PostitCard
             key={postit.id}
@@ -84,7 +97,8 @@ export default function MuralCanvas({
             template={postit.template}
             positionX={postit.positionX}
             positionY={postit.positionY}
-            disabled={readOnly}
+            disabled={readOnly || !muralLivre}
+            livre={muralLivre}
             tema={tema}
           />
         ))}

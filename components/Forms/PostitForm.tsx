@@ -68,12 +68,15 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
     }
   }
 
+  // Colado embaixo no celular, centralizado a partir de sm: o formulário é alto
+  // e, centralizado numa tela de 844px, o botão de enviar caía fora do alcance
+  // sem rolagem interna.
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full space-y-4 relative">
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center sm:p-4 z-50">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-w-md w-full space-y-4 relative max-h-[92vh] overflow-y-auto">
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-700"
         >
           <X className="w-6 h-6" />
         </button>
@@ -125,7 +128,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
               <button
                 type="button"
                 onClick={() => setColor("")}
-                className={`w-10 h-10 rounded-full border-2 transition ${
+                className={`w-11 h-11 rounded-full border-2 transition ${
                   color === "" ? "border-gray-800 scale-110" : "border-gray-300"
                 }`}
                 style={{ backgroundColor: corDoPostit(name, tema) }}
@@ -136,7 +139,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
                   key={c.hex}
                   type="button"
                   onClick={() => setColor(c.hex)}
-                  className={`w-10 h-10 rounded-full border-2 transition ${
+                  className={`w-11 h-11 rounded-full border-2 transition ${
                     color === c.hex ? "border-gray-800 scale-110" : "border-transparent"
                   }`}
                   style={{ backgroundColor: c.hex }}
@@ -155,8 +158,12 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
             </label>
             {/* Miniaturas em vez de nomes: "Fita, cursiva" só quer dizer alguma
                 coisa depois de visto. Cada uma é o postit de verdade em
-                escala reduzida, com a cor que este recado vai ter. */}
-            <div className="flex gap-2 flex-wrap">
+                escala reduzida, com a cor que este recado vai ter.
+
+                Rola na horizontal no celular em vez de quebrar linha: cinco
+                miniaturas em duas fileiras desalinhadas ocupam altura preciosa
+                num formulário que já é alto. */}
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0">
               <BotaoEstilo
                 id=""
                 rotulo="Automático"
@@ -191,7 +198,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
               <button
                 type="button"
                 onClick={() => setIcon(null)}
-                className={`px-3 py-2 rounded-lg border text-xs font-medium transition ${
+                className={`px-4 py-3 rounded-lg border text-xs font-medium transition ${
                   icon === null ? "border-pink-500 bg-pink-50" : "border-gray-300"
                 }`}
               >
@@ -207,7 +214,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
                   key={iconName}
                   type="button"
                   onClick={() => setIcon(iconName)}
-                  className={`p-2 rounded-lg border transition ${
+                  className={`p-3 rounded-lg border transition ${
                     icon === iconName ? "border-pink-500 bg-pink-50" : "border-gray-300"
                   }`}
                   title={iconName}
@@ -258,7 +265,7 @@ function BotaoEstilo({
       title={rotulo}
       aria-label={rotulo}
       aria-pressed={selecionado}
-      className={`relative w-16 rounded-lg border-2 p-1 pt-3 transition ${
+      className={`relative w-16 shrink-0 rounded-lg border-2 p-1 pt-3 transition ${
         selecionado ? "border-pink-500 bg-pink-50" : "border-gray-200 hover:border-gray-400"
       }`}
     >

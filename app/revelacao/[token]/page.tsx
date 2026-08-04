@@ -174,7 +174,7 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
               renderizar invisível. */}
           {/* `title` guarda o nome do homenageado; a saudação vem do tema, para
               que todo evento do mesmo tipo abra com a mesma frase. */}
-          <h1 className="text-4xl font-bold" style={{ color: tema.acento }}>
+          <h1 className="text-3xl sm:text-4xl font-bold text-balance" style={{ color: tema.acento }}>
             {tema.saudacao}, {event.title}!
           </h1>
           {event.description && <p className="text-gray-600">{event.description}</p>}

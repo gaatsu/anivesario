@@ -6,11 +6,9 @@ import {
   LARGURA_RECADO,
   alturaNecessaria,
   colunasQueCabem,
-  organizarEmGrade,
   posicaoNaGrade,
   seSobrepoe,
   semSobreposicao,
-  semVazamento,
   vagaLivre,
 } from "./arranjo.ts"
 
@@ -64,13 +62,6 @@ test("a grade cabe na largura do mural", () => {
   for (let i = 0; i < 20; i++) {
     assert.ok(posicaoNaGrade(i, largura).x + LARGURA_RECADO <= largura + 10)
   }
-})
-
-test("organizar preserva os ids e a ordem", () => {
-  const itens = [{ id: "a" }, { id: "b" }, { id: "c" }]
-  const arranjo = organizarEmGrade(itens, 1100)
-  assert.deepEqual(arranjo.map((p) => p.id), ["a", "b", "c"])
-  assert.equal(arranjo.length, 3)
 })
 
 test("a altura cobre o recado mais baixo", () => {
@@ -170,44 +161,25 @@ test("ninguém fica fora do quadro numa janela estreita", () => {
     return { id: `r${i}`, positionX: p.x, positionY: p.y }
   })
 
-  for (const arrumado of [
-    semSobreposicao(daGradeLarga, larguraReal),
-    semVazamento(daGradeLarga, larguraReal),
-  ]) {
-    for (const p of arrumado) {
-      assert.ok(
-        p.positionX + LARGURA_RECADO <= larguraReal,
-        `${p.id} passa da borda: x=${p.positionX}`
-      )
-    }
+  for (const p of semSobreposicao(daGradeLarga, larguraReal)) {
+    assert.ok(
+      p.positionX + LARGURA_RECADO <= larguraReal,
+      `${p.id} passa da borda: x=${p.positionX}`
+    )
   }
 })
 
-test("semVazamento não desfaz pilha, só resgata quem saiu do quadro", () => {
-  // No mural de coleta a sobreposição ainda pode ser escolha de quem arrastou;
-  // recado fora do quadro não é escolha de ninguém.
-  const empilhados = [
-    { id: "a", positionX: 10, positionY: 10 },
-    { id: "b", positionX: 16, positionY: 14 },
-  ]
-  assert.deepEqual(semVazamento(empilhados, 1100), empilhados)
-
-  const fugitivo = [{ id: "c", positionX: 2000, positionY: 10 }]
-  assert.notDeepEqual(semVazamento(fugitivo, 1100), fugitivo)
-})
-
 test("resgatar quem saiu do quadro não cria pilha com quem ficou", () => {
-  // O defeito que apareceu ao consertar o vazamento: escolhendo a vaga só com
-  // os recados já visitados, o resgatado caía sobre um que ainda vinha na
-  // lista. O que fica em último lugar aqui é justamente a primeira vaga da
-  // grade, que é para onde o fugitivo iria.
+  // Escolhendo a vaga só com os recados já visitados, o resgatado caía sobre um
+  // que ainda vinha na lista. O que fica em último lugar aqui é justamente a
+  // primeira vaga da grade, que é para onde o fugitivo iria.
   const primeiraVaga = posicaoNaGrade(0, 1100)
   const itens = [
     { id: "fugitivo", positionX: 5000, positionY: 0 },
     { id: "quieto", positionX: primeiraVaga.x, positionY: primeiraVaga.y },
   ]
 
-  const arrumado = semVazamento(itens, 1100)
+  const arrumado = semSobreposicao(itens, 1100)
   assert.deepEqual(arrumado[1], itens[1], "quem estava bem não devia sair do lugar")
   assert.ok(
     !seSobrepoe(

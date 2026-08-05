@@ -174,31 +174,6 @@ export function semSobreposicao<T extends { positionX: number; positionY: number
   )
 }
 
-/**
- * Traz para dentro do quadro só quem escapou pela direita.
- *
- * Para o mural de coleta, que tem arraste e botão de arrumar: lá uma pilha
- * ainda é uma escolha possível de quem montou o mural, mas recado fora do
- * quadro não é escolha nenhuma — é recado que ninguém consegue ler nem
- * alcançar. Sobreposição fica para o botão.
- */
-export function semVazamento<T extends { positionX: number; positionY: number }>(
-  itens: T[],
-  larguraMural: number = LARGURA_PADRAO
-): T[] {
-  return realocar(itens, larguraMural, (p) => vazaPelaDireita(p, larguraMural))
-}
-
-/** Recalcula a posição de todos, na ordem recebida. */
-export function organizarEmGrade<T extends { id: string }>(
-  itens: T[],
-  larguraMural: number = LARGURA_PADRAO
-): { id: string; positionX: number; positionY: number }[] {
-  return itens.map((item, i) => {
-    const { x, y } = posicaoNaGrade(i, larguraMural)
-    return { id: item.id, positionX: x, positionY: y }
-  })
-}
 
 /**
  * Altura necessária para o mural não cortar ninguém.

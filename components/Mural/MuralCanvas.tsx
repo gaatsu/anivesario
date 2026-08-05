@@ -1,19 +1,12 @@
 "use client"
 
 import { DndContext, type DragEndEvent } from "@dnd-kit/core"
-import { LayoutGrid } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
 import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
 import { meusRecados } from "@/lib/meus-recados"
-import {
-  LARGURA_PADRAO,
-  alturaNecessaria,
-  organizarEmGrade,
-  semSobreposicao,
-  semVazamento,
-} from "@/lib/arranjo"
+import { LARGURA_PADRAO, alturaNecessaria, semSobreposicao } from "@/lib/arranjo"
 
 interface Postit {
   id: string
@@ -49,7 +42,6 @@ export default function MuralCanvas({
 }: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
   const container = useRef<HTMLDivElement>(null)
-  const [reorganizando, setReorganizando] = useState(false)
   // Vazio no servidor e no primeiro render: localStorage não existe lá, e ler
   // durante o render faria o HTML do servidor divergir do cliente.
   const [meus, setMeus] = useState<Set<string>>(() => new Set())
@@ -76,17 +68,15 @@ export default function MuralCanvas({
   }, [])
 
   useEffect(() => {
-    // Somente-leitura é o link da revelação: lá ninguém arrasta nem tem o botão
-    // de arrumar, então o homenageado seria o único sem saída diante de uma
-    // pilha. Fora dele, só se corrige quem escapou do quadro — sobreposição
-    // ainda pode ser escolha de quem montou o mural, recado ilegível não.
+    // Vale para as duas telas, e não só para a da revelação: os dois links
+    // circulam entre pessoas que não montaram o mural e não têm por que
+    // arrumá-lo. Ninguém vê pilha em lugar nenhum.
     //
-    // Em todo caso é correção de tela: o banco continua guardando o que estava
-    // lá, e quem quiser gravar clica em "Arrumar no mural".
-    setLocalPostits(
-      readOnly ? semSobreposicao(postits, largura) : semVazamento(postits, largura)
-    )
-  }, [postits, readOnly, largura])
+    // É correção de tela: o banco continua guardando o que está lá. Arrastar
+    // durante a visita não é desfeito — este efeito só roda quando os recados
+    // chegam do servidor.
+    setLocalPostits(semSobreposicao(postits, largura))
+  }, [postits, largura])
 
   useEffect(() => {
     setMeus(meusRecados(postits.map((p) => p.id)))
@@ -123,56 +113,13 @@ export default function MuralCanvas({
     }
   }
 
-  // Recoloca todos na grade e salva. Existe porque murais antigos foram
-  // criados com posição sorteada e já estão empilhados — e porque depois de
-  // muito arrasto manual é bom ter como voltar ao arrumado.
-  const reorganizar = async () => {
-    if (!shareLink || readOnly) return
-
-    const arranjo = organizarEmGrade(localPostits, largura)
-    const porId = new Map(arranjo.map((p) => [p.id, p]))
-
-    setLocalPostits((atuais) =>
-      atuais.map((p) => {
-        const novo = porId.get(p.id)
-        return novo ? { ...p, positionX: novo.positionX, positionY: novo.positionY } : p
-      })
-    )
-
-    setReorganizando(true)
-    try {
-      // Em série, não em paralelo: são até dezenas de PATCHes e disparar todos
-      // de uma vez estoura o limite de conexões do navegador.
-      for (const p of arranjo) {
-        await fetch(`/api/mural/${shareLink}/postits/${p.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ positionX: p.positionX, positionY: p.positionY }),
-        })
-      }
-    } catch (error) {
-      console.error("Erro ao reorganizar o mural:", error)
-    } finally {
-      setReorganizando(false)
-    }
-  }
+  // O botão "Arrumar no mural" saiu daqui. Ele existia para consertar à mão o
+  // que agora é consertado sozinho ao desenhar, e ficava visível no link que
+  // circula no grupo — dando a qualquer visitante o poder de rearranjar o mural
+  // de todo mundo, pelo mesmo motivo que o exportar PDF saiu desta página.
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      {/* Só no mural livre: na coluna do celular não há o que reorganizar. */}
-      {muralLivre && !readOnly && shareLink && localPostits.length > 1 && (
-        <div className="mb-3 flex justify-end">
-          <button
-            type="button"
-            onClick={reorganizar}
-            disabled={reorganizando}
-            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-apoio font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-          >
-            <LayoutGrid className="h-4 w-4" />
-            {reorganizando ? "Arrumando..." : "Arrumar no mural"}
-          </button>
-        </div>
-      )}
       <div
         ref={container}
         // Altura pelo recado mais baixo: com min-h fixo de 600px, a partir do

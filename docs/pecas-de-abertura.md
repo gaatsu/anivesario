@@ -35,6 +35,29 @@ export default function MinhaPeca({ tema, cores, className = "" }: PropsPeca) {
 tema, boa para detalhes. `className` chega com a largura — **não fixe tamanho**,
 use só o `viewBox`.
 
+## Tamanho
+
+| | Valor | Por quê |
+|---|---|---|
+| `viewBox` | `0 0 260 244` | O mesmo do bolo. Igual em todas, as peças viram intercambiáveis no registro. |
+| Área útil do desenho | ~220 × 204, centralizada | Sobra ~20px de margem em toda a volta. |
+| Renderizado | 208px (`w-52`), 256px a partir de `md` | O que `Abertura.tsx` passa. |
+
+**A margem de 20px não é enfeite.** O `viewBox` é o palco, não o desenho: toda
+entrada com overshoot — um `scale` que passa de 1 antes de assentar, um
+balanço, um halo pulsando — precisa de para onde crescer. Encostou na borda,
+corta, e a peça inteira lê como erro.
+
+O bolo hoje desrespeita isso: a chama vai a `y=20` e o halo é um círculo em
+`cy=42 r=34`, topo em `y=8`. Passa porque a chama não escala depois de entrar
+— mas uma peça que dê um pulo vai cortar em cima.
+
+**Confira a 208px, não a 800px.** O celular é onde isso abre. Um traço de 2px
+no `viewBox` vira 1,6px na tela.
+
+Evite `filter` de blur dentro do SVG — é caro no celular. O medalhão usa
+`blur-2xl`, mas num `<div>` de CSS e num elemento só.
+
 ## 2. Registrar
 
 `components/Abertura/pecas.ts` — é o único lugar:

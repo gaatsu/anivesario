@@ -6,6 +6,7 @@ import PostitForm from "@/components/Forms/PostitForm"
 import Carrossel from "@/components/Carrossel/Carrossel"
 import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
 import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
+import { posicaoNaGrade } from "@/lib/arranjo"
 
 /**
  * Bancada de responsividade.
@@ -26,15 +27,17 @@ const RECADOS = [
 ]
 
 // As mesmas coordenadas que a API sorteia hoje: Math.random() * 600 por 300.
-const POSTITS = NOMES.map((name, i) => ({
+const POSTITS = Array.from({ length: 12 }, (_, i) => ({
   id: String(i),
-  name,
-  message: RECADOS[i],
+  name: NOMES[i % NOMES.length],
+  message: RECADOS[i % RECADOS.length],
   color: "",
   icon: null,
   template: "",
-  positionX: (i * 97) % 600,
-  positionY: (i * 71) % 300,
+  ...(() => {
+    const p = posicaoNaGrade(i, 1100)
+    return { positionX: p.x, positionY: p.y }
+  })(),
 }))
 
 const FOTOS = Array.from(

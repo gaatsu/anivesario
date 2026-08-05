@@ -1,11 +1,13 @@
 "use client"
 
 import { DndContext, type DragEndEvent } from "@dnd-kit/core"
-import { useEffect, useState } from "react"
+import { LayoutGrid } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
 import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
 import { meusRecados } from "@/lib/meus-recados"
+import { alturaDaGrade, organizarEmGrade } from "@/lib/arranjo"
 
 interface Postit {
   id: string
@@ -40,6 +42,8 @@ export default function MuralCanvas({
   tema,
 }: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
+  const container = useRef<HTMLDivElement>(null)
+  const [reorganizando, setReorganizando] = useState(false)
   // Vazio no servidor e no primeiro render: localStorage não existe lá, e ler
   // durante o render faria o HTML do servidor divergir do cliente.
   const [meus, setMeus] = useState<Set<string>>(() => new Set())
@@ -89,12 +93,65 @@ export default function MuralCanvas({
     }
   }
 
+  // Recoloca todos na grade e salva. Existe porque murais antigos foram
+  // criados com posição sorteada e já estão empilhados — e porque depois de
+  // muito arrasto manual é bom ter como voltar ao arrumado.
+  const reorganizar = async () => {
+    if (!shareLink || readOnly) return
+
+    const largura = container.current?.clientWidth
+    const arranjo = organizarEmGrade(localPostits, largura)
+    const porId = new Map(arranjo.map((p) => [p.id, p]))
+
+    setLocalPostits((atuais) =>
+      atuais.map((p) => {
+        const novo = porId.get(p.id)
+        return novo ? { ...p, positionX: novo.positionX, positionY: novo.positionY } : p
+      })
+    )
+
+    setReorganizando(true)
+    try {
+      // Em série, não em paralelo: são até dezenas de PATCHes e disparar todos
+      // de uma vez estoura o limite de conexões do navegador.
+      for (const p of arranjo) {
+        await fetch(`/api/mural/${shareLink}/postits/${p.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ positionX: p.positionX, positionY: p.positionY }),
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao reorganizar o mural:", error)
+    } finally {
+      setReorganizando(false)
+    }
+  }
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
+      {/* Só no mural livre: na coluna do celular não há o que reorganizar. */}
+      {muralLivre && !readOnly && shareLink && localPostits.length > 1 && (
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={reorganizar}
+            disabled={reorganizando}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-apoio font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            {reorganizando ? "Arrumando..." : "Arrumar no mural"}
+          </button>
+        </div>
+      )}
       <div
+        ref={container}
+        // Altura conforme a quantidade: com min-h fixo de 600px, a partir do
+        // decimo recado a ultima linha da grade ficava cortada por baixo.
+        style={muralLivre ? { minHeight: alturaDaGrade(localPostits.length) } : undefined}
         className={`w-full rounded-2xl bg-[url('/cork-texture.png')] bg-cover ${
           muralLivre
-            ? "relative min-h-[600px]"
+            ? "relative"
             : "flex flex-col items-center gap-6 px-2 py-6"
         }`}
       >

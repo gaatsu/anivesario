@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { deleteEventIfExpired } from "@/lib/eventLifecycle"
 import { ESTILOS } from "@/lib/postit-visual"
 import { assinarPostit } from "@/lib/postit-token"
+import { posicaoNaGrade } from "@/lib/arranjo"
 
 export async function POST(
   request: NextRequest,
@@ -35,6 +36,9 @@ export async function POST(
       return NextResponse.json({ message: "Event expired" }, { status: 404 })
     }
 
+    const jaColados = await db.postit.count({ where: { eventId: event.id } })
+    const vaga = posicaoNaGrade(jaColados)
+
     const postit = await db.postit.create({
       data: {
         eventId: event.id,
@@ -48,8 +52,11 @@ export async function POST(
         // Mesma sentinela da cor: vazio = automático. Um id fora do registro é
         // descartado aqui, para o banco nunca guardar estilo que não existe.
         template: ESTILOS.some((e) => e.id === template) ? template : "",
-        positionX: positionX ?? Math.random() * 600,
-        positionY: positionY ?? Math.random() * 400,
+        // Proxima vaga livre da grade. O sorteio anterior colocava tudo
+        // dentro de 600x300, e um recado tem ate 224 de largura: do quarto em
+        // diante eles nasciam empilhados uns sobre os outros.
+        positionX: typeof positionX === "number" ? positionX : vaga.x,
+        positionY: typeof positionY === "number" ? positionY : vaga.y,
       },
     })
 

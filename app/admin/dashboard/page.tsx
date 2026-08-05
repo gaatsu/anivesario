@@ -30,6 +30,23 @@ interface Event {
  * o que vem da API é ISO em UTC. Sem esta conversão, abrir a edição mostraria o
  * campo vazio e salvar apagaria a data.
  */
+/**
+ * Caminho de volta: o que o campo mostra vira um instante sem ambiguidade.
+ *
+ * `datetime-local` entrega "2026-08-20T14:00" **sem fuso**, e o servidor roda em
+ * UTC — então `new Date(...)` lá interpretava as 14:00 escolhidas em Brasília
+ * como 14:00 UTC. O horário voltava para a tela 3h mais cedo, e como a edição
+ * relê o campo e regrava, cada vez que o evento era salvo a data andava mais 3h
+ * para trás.
+ *
+ * Aqui a conversão acontece no navegador, onde "local" é de fato o fuso de quem
+ * marcou, e o servidor recebe ISO com offset.
+ */
+function paraInstante(valorDoCampo: string): string {
+  const d = new Date(valorDoCampo)
+  return Number.isNaN(d.getTime()) ? valorDoCampo : d.toISOString()
+}
+
 function paraCampoDeData(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ""
@@ -87,7 +104,7 @@ export default function DashboardPage() {
         {
           method: editandoId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, eventDate: paraInstante(formData.eventDate) }),
         }
       )
 

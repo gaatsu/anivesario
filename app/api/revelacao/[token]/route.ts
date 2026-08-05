@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { deleteEventIfExpired, EVENT_LIFETIME_MS } from "@/lib/eventLifecycle"
+import { ocultarEventoSeVencido, validadeDasFotos } from "@/lib/eventLifecycle"
 import { assinarFotos } from "@/lib/fotos"
 
 // Mesma leitura pública do mural, mas endereçada pelo revealLink. Fica separada
@@ -28,17 +28,14 @@ export async function GET(
       return NextResponse.json({ message: "Event not found" }, { status: 404 })
     }
 
-    if (await deleteEventIfExpired(event)) {
+    if (await ocultarEventoSeVencido(event)) {
       return NextResponse.json({ message: "Event expired" }, { status: 404 })
     }
 
-    // As URLs valem até o evento expirar, e não um prazo fixo: o mural morre em
-    // 12h de qualquer forma, então uma assinatura mais longa não serviria a
-    // ninguém, e uma mais curta quebraria as imagens numa aba deixada aberta.
-    const photos = await assinarFotos(
-      event.photos,
-      event.createdAt.getTime() + EVENT_LIFETIME_MS
-    )
+    // As URLs valem até o mural sair do ar, e não um prazo fixo: assinatura
+    // mais curta quebraria as imagens numa aba deixada aberta, e mais longa não
+    // serviria a ninguém. Conta da data do evento, como o vencimento.
+    const photos = await assinarFotos(event.photos, validadeDasFotos(event.eventDate))
 
     return NextResponse.json({ ...event, photos })
   } catch (error) {

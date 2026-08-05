@@ -112,7 +112,7 @@ Sem o `prisma generate`, não há client gerado — então `tsc`, `next build` e
 4. Ambos são públicos — ninguém **precisa de login** para abrir
 5. Visitantes escolhem cor + ícone do postit, escrevem nome e mensagem, e arrastam livremente pelo mural
 6. É possível **exportar o mural em PDF** a qualquer momento
-7. **Após 12h da criação, o evento e seus recados são apagados automaticamente** (limpeza "preguiçosa" a cada acesso + cron diário de segurança via Vercel Cron)
+7. **12h depois da data marcada, o mural sai do ar**; uma semana depois disso, os dados e as fotos são apagados de vez (limpeza "preguiçosa" a cada acesso + cron diário de segurança via Vercel Cron)
 8. Master Admin pode gerar **links de convite** para outros admins em `/admin/delegados`. O link é aleatório (`randomBytes(32)`), vale 7 dias e só pode ser usado uma vez; quem abrir define o próprio nome, email e senha. O master nunca conhece a senha do delegado, e pode revogar o acesso a qualquer momento
 
 ## Deploy na Vercel
@@ -126,7 +126,12 @@ Sem o `prisma generate`, não há client gerado — então `tsc`, `next build` e
 
 > **O seed não roda no build.** O `buildCommand` propositalmente não inclui `prisma db seed`: o seed usa type stripping nativo do Node (`--experimental-strip-types`, Node ≥ 22.6), e uma incompatibilidade de versão no build derrubaria o deploy inteiro por algo que só precisa rodar uma vez. Rode `npx prisma db seed` manualmente quando precisar criar o master admin.
 
-> **Nota sobre o plano gratuito da Vercel (Hobby):** cron jobs são limitados a 1x/dia. Por isso a expiração de 12h é garantida principalmente por checagem "lazy" (ao acessar o mural ou o dashboard, eventos vencidos são apagados na hora) — o cron diário é só um reforço.
+> **Nota sobre o plano gratuito da Vercel (Hobby):** cron jobs são limitados a 1x/dia. Por isso o vencimento é garantido principalmente por checagem "lazy" (ao acessar o mural ou o dashboard, murais vencidos saem do ar na hora) — o cron diário é só um reforço.
+>
+> O acesso **esconde**, nunca apaga: preenche `deletedAt`. Quem apaga de vez é a
+> segunda fase, sete dias depois. A versão anterior apagava direto no acesso, e
+> como `Postit` tem `onDelete: Cascade`, o primeiro visitante a abrir um link
+> vencido levava junto todos os recados do time. Ver `lib/prazos.ts`.
 
 ## Estrutura
 

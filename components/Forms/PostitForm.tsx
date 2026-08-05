@@ -14,24 +14,45 @@ import {
   corDoTextoPostit,
   resolverEstilo,
 } from "@/lib/postit-visual"
+import { guardarRecado, tokenDoRecado } from "@/lib/meus-recados"
+
+/** Recado existente, quando o formulário está em modo de edição. */
+export interface RecadoEditavel {
+  id: string
+  name: string
+  message: string
+  color: string
+  icon?: string | null
+  template?: string
+}
 
 interface PostitFormProps {
   shareLink: string
   onSuccess: () => void
   onCancel: () => void
   tema: Tema
+  /** Ausente = criar. Presente = editar aquele recado. */
+  recado?: RecadoEditavel
 }
 
-export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: PostitFormProps) {
-  const [name, setName] = useState("")
-  const [message, setMessage] = useState("")
+export default function PostitForm({
+  shareLink,
+  onSuccess,
+  onCancel,
+  tema,
+  recado,
+}: PostitFormProps) {
+  const editando = !!recado
+
+  const [name, setName] = useState(recado?.name ?? "")
+  const [message, setMessage] = useState(recado?.message ?? "")
   // Vazio = automático: o postit ganha a cor do tema derivada do nome. Começar
   // numa cor fixa faria todo recado parecer escolhido à mão e a paleta
   // procedural nunca apareceria.
-  const [color, setColor] = useState("")
-  const [icon, setIcon] = useState<string | null>(null)
+  const [color, setColor] = useState(recado?.color ?? "")
+  const [icon, setIcon] = useState<string | null>(recado?.icon ?? null)
   // Vazio = automático, mesma convenção da cor.
-  const [template, setTemplate] = useState("")
+  const [template, setTemplate] = useState(recado?.template ?? "")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -41,21 +62,41 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
     setIsSubmitting(true)
 
     try {
-      const res = await fetch(`/api/mural/${shareLink}/postits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          message,
-          color,
-          icon,
-          template,
-          positionX: Math.random() * 600,
-          positionY: Math.random() * 300,
-        }),
-      })
+      const res = editando
+        ? await fetch(`/api/mural/${shareLink}/postits/${recado.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            // O token prova a autoria; sem ele o servidor recusa a edição.
+            body: JSON.stringify({
+              name,
+              message,
+              color,
+              icon,
+              template,
+              token: tokenDoRecado(recado.id),
+            }),
+          })
+        : await fetch(`/api/mural/${shareLink}/postits`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              message,
+              color,
+              icon,
+              template,
+              positionX: Math.random() * 600,
+              positionY: Math.random() * 300,
+            }),
+          })
 
       if (res.ok) {
+        // O token só vem na criação, e só uma vez. Guardá-lo aqui é o que
+        // permite editar e apagar depois.
+        if (!editando) {
+          const criado = await res.json()
+          if (criado?.id && criado?.token) guardarRecado(criado.id, criado.token)
+        }
         onSuccess()
       } else {
         const data = await res.json()
@@ -72,8 +113,20 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
   // e, centralizado numa tela de 844px, o botão de enviar caía fora do alcance
   // sem rolagem interna.
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center sm:p-4 z-50">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-w-md w-full space-y-4 relative max-h-[92vh] overflow-y-auto">
+    // `dvh` e não `vh`: no celular, `vh` mede a viewport com a barra do
+    // navegador escondida, então 92vh é mais alto que a área realmente visível
+    // e o topo do formulário — o título — fica atrás da barra de endereço.
+    // `dvh` acompanha a barra aparecendo e sumindo.
+    <div className="fixed inset-0 z-50 flex h-[100dvh] items-end justify-center bg-black/50 sm:items-center sm:p-4">
+      <div
+        className="relative w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6"
+        style={{
+          maxHeight: "88dvh",
+          // Respiro para a barra de gestos do iPhone, que fica por cima do
+          // conteúdo colado na borda de baixo.
+          paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))",
+        }}
+      >
         <button
           onClick={onCancel}
           className="absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-700"
@@ -81,7 +134,9 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-900">Deixe seu recado</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          {editando ? "Editar seu recado" : "Deixe seu recado"}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -231,7 +286,7 @@ export default function PostitForm({ shareLink, onSuccess, onCancel, tema }: Pos
             disabled={isSubmitting}
             className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50"
           >
-            {isSubmitting ? "Enviando..." : "Colar no Mural"}
+            {isSubmitting ? "Salvando..." : editando ? "Salvar alterações" : "Colar no Mural"}
           </button>
         </form>
       </div>

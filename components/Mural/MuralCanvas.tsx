@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
 import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
+import { meusRecados } from "@/lib/meus-recados"
 
 interface Postit {
   id: string
@@ -24,6 +25,8 @@ interface MuralCanvasProps {
   onPositionsChange?: (postits: Postit[]) => void
   /** Link de revelação: o homenageado vê o mural, mas não reorganiza nada. */
   readOnly?: boolean
+  onEditar?: (postit: Postit) => void
+  onExcluir?: (postit: Postit) => void
   tema: Tema
 }
 
@@ -32,9 +35,14 @@ export default function MuralCanvas({
   postits,
   onPositionsChange,
   readOnly = false,
+  onEditar,
+  onExcluir,
   tema,
 }: MuralCanvasProps) {
   const [localPostits, setLocalPostits] = useState(postits)
+  // Vazio no servidor e no primeiro render: localStorage não existe lá, e ler
+  // durante o render faria o HTML do servidor divergir do cliente.
+  const [meus, setMeus] = useState<Set<string>>(() => new Set())
 
   // No celular os recados viram uma coluna legível e arrastar sai de cena.
   // Não é degradação: posições em pixel vindas de um mural de 600px não cabem
@@ -44,6 +52,10 @@ export default function MuralCanvas({
 
   useEffect(() => {
     setLocalPostits(postits)
+  }, [postits])
+
+  useEffect(() => {
+    setMeus(meusRecados(postits.map((p) => p.id)))
   }, [postits])
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -99,6 +111,9 @@ export default function MuralCanvas({
             positionY={postit.positionY}
             disabled={readOnly || !muralLivre}
             livre={muralLivre}
+            meu={!readOnly && meus.has(postit.id)}
+            onEditar={onEditar && (() => onEditar(postit))}
+            onExcluir={onExcluir && (() => onExcluir(postit))}
             tema={tema}
           />
         ))}

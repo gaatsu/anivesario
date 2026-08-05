@@ -1,11 +1,12 @@
 "use client"
 
 import EstadoVazio from "@/components/ui/EstadoVazio"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { Plus, Download, PartyPopper } from "lucide-react"
+import { Plus, PartyPopper } from "lucide-react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
-import PostitForm from "@/components/Forms/PostitForm"
+import PostitForm, { type RecadoEditavel } from "@/components/Forms/PostitForm"
+import { esquecerRecado, tokenDoRecado } from "@/lib/meus-recados"
 import { resolverTema } from "@/lib/themes"
 
 interface Postit {
@@ -37,8 +38,8 @@ export default function MuralPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [showForm, setShowForm] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
-  const muralRef = useRef<HTMLDivElement>(null)
+  // Recado sendo editado. O mesmo formulário serve para criar e editar.
+  const [editando, setEditando] = useState<RecadoEditavel | null>(null)
 
   useEffect(() => {
     fetchEvent()
@@ -65,28 +66,24 @@ export default function MuralPage() {
   // abrir /revelacao/[token].
   const handlePostitSuccess = () => {
     setShowForm(false)
+    setEditando(null)
     fetchEvent()
   }
 
-  const handleExportPdf = async () => {
-    if (!muralRef.current) return
-    setIsExporting(true)
-    try {
-      const html2pdf = (await import("html2pdf.js")).default
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: `mural-${event?.title || "evento"}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-        })
-        .from(muralRef.current)
-        .save()
-    } catch (err) {
-      console.error("Error exporting PDF:", err)
-    } finally {
-      setIsExporting(false)
+  const handleExcluir = async (postit: Postit) => {
+    if (!confirm("Apagar seu recado? Não dá para desfazer.")) return
+
+    const res = await fetch(`/api/mural/${shareLink}/postits/${postit.id}`, {
+      method: "DELETE",
+      // Cabeçalho, e não corpo: DELETE com corpo atravessa mal proxies.
+      headers: { "x-recado-token": tokenDoRecado(postit.id) ?? "" },
+    })
+
+    if (res.ok) {
+      esquecerRecado(postit.id)
+      fetchEvent()
+    } else {
+      alert("Não consegui apagar o recado.")
     }
   }
 
@@ -130,26 +127,23 @@ export default function MuralPage() {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-center">
+        {/* Sem exportar PDF aqui de propósito: este link circula no grupo, e o
+            PDF leva o mural inteiro de recados. Quem exporta é o homenageado,
+            no link da surpresa. */}
+        <div className="flex justify-center">
           <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold hover:shadow-lg transition"
+            onClick={() => {
+              setEditando(null)
+              setShowForm(true)
+            }}
+            className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-3 font-semibold text-white transition hover:shadow-lg sm:w-auto"
           >
             <Plus className="w-5 h-5" />
             Deixar Recado
           </button>
-
-          <button
-            onClick={handleExportPdf}
-            disabled={isExporting}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50"
-          >
-            <Download className="w-5 h-5" />
-            {isExporting ? "Exportando..." : "Exportar PDF"}
-          </button>
         </div>
 
-        <div ref={muralRef}>
+        <div>
           {event.postits.length === 0 ? (
             <EstadoVazio
               Icone={PartyPopper}
@@ -161,6 +155,11 @@ export default function MuralPage() {
               shareLink={shareLink}
               postits={event.postits}
               onPositionsChange={() => {}}
+              onEditar={(p) => {
+                setEditando(p)
+                setShowForm(true)
+              }}
+              onExcluir={handleExcluir}
               tema={tema}
             />
           )}
@@ -169,9 +168,14 @@ export default function MuralPage() {
 
       {showForm && (
         <PostitForm
+          key={editando?.id ?? "novo"}
           shareLink={shareLink}
+          recado={editando ?? undefined}
           onSuccess={handlePostitSuccess}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            setShowForm(false)
+            setEditando(null)
+          }}
           tema={tema}
         />
       )}

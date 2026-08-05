@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { deleteEventIfExpired } from "@/lib/eventLifecycle"
 import { ESTILOS } from "@/lib/postit-visual"
+import { assinarPostit } from "@/lib/postit-token"
 
 export async function POST(
   request: NextRequest,
@@ -52,7 +53,12 @@ export async function POST(
       },
     })
 
-    return NextResponse.json(postit, { status: 201 })
+    // O token vai junto na resposta e so aqui: e o unico momento em que quem
+    // escreveu pode guarda-lo. Editar e excluir dependem dele depois.
+    return NextResponse.json(
+      { ...postit, token: assinarPostit(postit.id) },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("Error creating postit:", error)
     return NextResponse.json(

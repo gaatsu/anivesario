@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import PostitForm from "@/components/Forms/PostitForm"
 import Carrossel from "@/components/Carrossel/Carrossel"
@@ -43,14 +43,34 @@ const FOTOS = Array.from(
 )
 
 export default function PreviewMobile() {
-  const [form, setForm] = useState(false)
+  const [form, setForm] = useState(
+    typeof window !== "undefined" && new URLSearchParams(location.search).has("form")
+  )
+  const [pronto, setPronto] = useState(false)
+
+  // Finge a posse dos dois primeiros recados para os botões do autor
+  // aparecerem na bancada.
+  useEffect(() => {
+    localStorage.setItem(
+      "mensagens_corp_recados",
+      JSON.stringify({ "0": "token-falso", "1": "token-falso" })
+    )
+    setPronto(true)
+  }, [])
   const tema = resolverTema("birthday")
 
   return (
     <main className="fundo-papel min-h-screen space-y-10 p-4">
       <section>
-        <h2 className="text-seccao font-bold text-tinta">Mural</h2>
-        <MuralCanvas postits={POSTITS} readOnly tema={tema} />
+        <h2 className="text-seccao font-bold text-tinta">Mural {pronto ? "" : "…"}</h2>
+        <MuralCanvas
+          key={String(pronto)}
+          postits={POSTITS}
+          shareLink="preview"
+          onEditar={() => {}}
+          onExcluir={() => {}}
+          tema={tema}
+        />
       </section>
 
       <section>

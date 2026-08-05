@@ -1,6 +1,7 @@
 import type { ComponentType } from "react"
 import type { Tema, TipoEvento } from "@/lib/themes"
 import Bolo from "./Bolo"
+import Ferias from "./Ferias"
 import Medalhao from "./Medalhao"
 
 /** Contrato de toda peça central de abertura. */
@@ -19,6 +20,7 @@ export interface PropsPeca {
  */
 export const PECAS: Partial<Record<TipoEvento, ComponentType<PropsPeca>>> = {
   birthday: Bolo,
+  vacation: Ferias,
 }
 
 export function pecaDoTema(tipo: TipoEvento): ComponentType<PropsPeca> {

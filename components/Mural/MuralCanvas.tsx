@@ -7,7 +7,13 @@ import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
 import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
 import { meusRecados } from "@/lib/meus-recados"
-import { alturaNecessaria, organizarEmGrade, semSobreposicao } from "@/lib/arranjo"
+import {
+  LARGURA_PADRAO,
+  alturaNecessaria,
+  organizarEmGrade,
+  semSobreposicao,
+  semVazamento,
+} from "@/lib/arranjo"
 
 interface Postit {
   id: string
@@ -54,13 +60,33 @@ export default function MuralCanvas({
   // briga com a rolagem da página.
   const muralLivre = useMediaQuery(ACIMA_DE_CELULAR)
 
+  // Largura real do mural, e não a suposição de 1100px que o servidor usa por
+  // não ter como saber o tamanho da tela. Sem medir, numa janela entre 640 e
+  // 1100px a última coluna nasce fora do quadro.
+  const [largura, setLargura] = useState(LARGURA_PADRAO)
+
+  useEffect(() => {
+    const alvo = container.current
+    if (!alvo) return
+    const observador = new ResizeObserver(([entrada]) => {
+      setLargura(entrada.contentRect.width || LARGURA_PADRAO)
+    })
+    observador.observe(alvo)
+    return () => observador.disconnect()
+  }, [])
+
   useEffect(() => {
     // Somente-leitura é o link da revelação: lá ninguém arrasta nem tem o botão
     // de arrumar, então o homenageado seria o único sem saída diante de uma
-    // pilha. Só quem está sobreposto sai do lugar, e só na tela — o banco
-    // continua guardando a disposição que alguém montou à mão.
-    setLocalPostits(readOnly ? semSobreposicao(postits) : postits)
-  }, [postits, readOnly])
+    // pilha. Fora dele, só se corrige quem escapou do quadro — sobreposição
+    // ainda pode ser escolha de quem montou o mural, recado ilegível não.
+    //
+    // Em todo caso é correção de tela: o banco continua guardando o que estava
+    // lá, e quem quiser gravar clica em "Arrumar no mural".
+    setLocalPostits(
+      readOnly ? semSobreposicao(postits, largura) : semVazamento(postits, largura)
+    )
+  }, [postits, readOnly, largura])
 
   useEffect(() => {
     setMeus(meusRecados(postits.map((p) => p.id)))
@@ -103,7 +129,6 @@ export default function MuralCanvas({
   const reorganizar = async () => {
     if (!shareLink || readOnly) return
 
-    const largura = container.current?.clientWidth
     const arranjo = organizarEmGrade(localPostits, largura)
     const porId = new Map(arranjo.map((p) => [p.id, p]))
 

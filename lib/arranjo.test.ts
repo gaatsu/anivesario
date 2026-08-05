@@ -10,6 +10,7 @@ import {
   posicaoNaGrade,
   seSobrepoe,
   semSobreposicao,
+  semVazamento,
   vagaLivre,
 } from "./arranjo.ts"
 
@@ -157,6 +158,64 @@ test("semSobreposicao só mexe em quem está empilhado", () => {
       )
     }
   }
+})
+
+test("ninguém fica fora do quadro numa janela estreita", () => {
+  // O servidor coloca na grade de 1100px porque não tem como saber a largura da
+  // tela. Numa janela de 700 a última coluna nasce fora do mural — medido em
+  // 411px para fora numa janela de 660, antes desta correção.
+  const larguraReal = 700
+  const daGradeLarga = Array.from({ length: 8 }, (_, i) => {
+    const p = posicaoNaGrade(i, 1100)
+    return { id: `r${i}`, positionX: p.x, positionY: p.y }
+  })
+
+  for (const arrumado of [
+    semSobreposicao(daGradeLarga, larguraReal),
+    semVazamento(daGradeLarga, larguraReal),
+  ]) {
+    for (const p of arrumado) {
+      assert.ok(
+        p.positionX + LARGURA_RECADO <= larguraReal,
+        `${p.id} passa da borda: x=${p.positionX}`
+      )
+    }
+  }
+})
+
+test("semVazamento não desfaz pilha, só resgata quem saiu do quadro", () => {
+  // No mural de coleta a sobreposição ainda pode ser escolha de quem arrastou;
+  // recado fora do quadro não é escolha de ninguém.
+  const empilhados = [
+    { id: "a", positionX: 10, positionY: 10 },
+    { id: "b", positionX: 16, positionY: 14 },
+  ]
+  assert.deepEqual(semVazamento(empilhados, 1100), empilhados)
+
+  const fugitivo = [{ id: "c", positionX: 2000, positionY: 10 }]
+  assert.notDeepEqual(semVazamento(fugitivo, 1100), fugitivo)
+})
+
+test("resgatar quem saiu do quadro não cria pilha com quem ficou", () => {
+  // O defeito que apareceu ao consertar o vazamento: escolhendo a vaga só com
+  // os recados já visitados, o resgatado caía sobre um que ainda vinha na
+  // lista. O que fica em último lugar aqui é justamente a primeira vaga da
+  // grade, que é para onde o fugitivo iria.
+  const primeiraVaga = posicaoNaGrade(0, 1100)
+  const itens = [
+    { id: "fugitivo", positionX: 5000, positionY: 0 },
+    { id: "quieto", positionX: primeiraVaga.x, positionY: primeiraVaga.y },
+  ]
+
+  const arrumado = semVazamento(itens, 1100)
+  assert.deepEqual(arrumado[1], itens[1], "quem estava bem não devia sair do lugar")
+  assert.ok(
+    !seSobrepoe(
+      { x: arrumado[0].positionX, y: arrumado[0].positionY },
+      { x: arrumado[1].positionX, y: arrumado[1].positionY }
+    ),
+    "o resgatado caiu em cima de quem ficou"
+  )
 })
 
 test("um mural inteiro sorteado à moda antiga sai sem nenhuma pilha", () => {

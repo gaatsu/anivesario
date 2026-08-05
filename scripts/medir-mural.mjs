@@ -59,13 +59,19 @@ const relatorio = await pagina.evaluate(() => {
     }
 
     const maisBaixo = Math.max(...recados.map((r) => r.y + r.altura))
+    const maisADireita = Math.max(...recados.map((r) => r.x + r.largura))
     return {
       indice,
       recados: recados.length,
       sobrepostos,
       alturaDoMural: Math.round(caixaMural.height),
+      larguraDoMural: Math.round(caixaMural.width),
       // Positivo = recado passando da borda de baixo do mural.
       vazamento: Math.round(maisBaixo - (caixaMural.y + caixaMural.height)),
+      // Positivo = recado passando pela direita. A grade é calculada sobre
+      // 1100px no servidor, que não sabe a largura da tela — numa janela mais
+      // estreita que isso o recado da última coluna pode escapar.
+      vazamentoLateral: Math.round(maisADireita - (caixaMural.x + caixaMural.width)),
     }
   })
 })

@@ -109,7 +109,54 @@ export function vagaLivre(ocupadas: Ponto[], larguraMural: number = LARGURA_PADR
 }
 
 /**
- * Afasta só quem está sobreposto, preservando o resto do arranjo.
+ * Verdadeiro quando o recado passa da borda direita do mural.
+ *
+ * Acontece porque quem escolhe a vaga na hora de colar é o servidor, que não
+ * tem como saber a largura da tela e assume LARGURA_PADRAO. Numa janela mais
+ * estreita que isso, a última coluna cai fora do quadro — medido em 411px para
+ * fora numa janela de 660. Também pega o recado arrastado para a direita numa
+ * tela grande e aberto depois numa menor.
+ */
+function vazaPelaDireita(p: Ponto, larguraMural: number): boolean {
+  return p.x + LARGURA_RECADO > larguraMural
+}
+
+/**
+ * Recoloca só quem o teste reprovar, preservando o resto do arranjo.
+ *
+ * Em duas passadas, e não numa só: decidir e realocar ao mesmo tempo faz a vaga
+ * ser escolhida enxergando apenas os recados já visitados, e o recado realocado
+ * cai em cima de um que ainda está por vir na lista. Foi assim que consertar o
+ * vazamento lateral criou sobreposição onde não havia.
+ */
+function realocar<T extends { positionX: number; positionY: number }>(
+  itens: T[],
+  larguraMural: number,
+  precisaSair: (p: Ponto, mantidos: Ponto[]) => boolean
+): T[] {
+  const mantidos: Ponto[] = []
+  const mudam = new Set<number>()
+
+  itens.forEach((item, i) => {
+    const atual = { x: item.positionX, y: item.positionY }
+    if (precisaSair(atual, mantidos)) mudam.add(i)
+    else mantidos.push(atual)
+  })
+
+  // Começa sabendo de todo mundo que fica, e não só dos anteriores.
+  const ocupadas = [...mantidos]
+
+  return itens.map((item, i) => {
+    if (!mudam.has(i)) return item
+
+    const vaga = vagaLivre(ocupadas, larguraMural)
+    ocupadas.push(vaga)
+    return { ...item, positionX: vaga.x, positionY: vaga.y }
+  })
+}
+
+/**
+ * Afasta quem está sobreposto ou fora do quadro, preservando o resto.
  *
  * Para o mural somente-leitura, onde ninguém tem como arrastar nem clicar em
  * "arrumar": o homenageado não pode ser o único a ver uma pilha. Quem já está
@@ -120,20 +167,26 @@ export function semSobreposicao<T extends { positionX: number; positionY: number
   itens: T[],
   larguraMural: number = LARGURA_PADRAO
 ): T[] {
-  const aceitos: Ponto[] = []
+  return realocar(
+    itens,
+    larguraMural,
+    (p, aceitos) => vazaPelaDireita(p, larguraMural) || aceitos.some((o) => seSobrepoe(p, o))
+  )
+}
 
-  return itens.map((item) => {
-    const atual = { x: item.positionX, y: item.positionY }
-
-    if (!aceitos.some((o) => seSobrepoe(atual, o))) {
-      aceitos.push(atual)
-      return item
-    }
-
-    const vaga = vagaLivre(aceitos, larguraMural)
-    aceitos.push(vaga)
-    return { ...item, positionX: vaga.x, positionY: vaga.y }
-  })
+/**
+ * Traz para dentro do quadro só quem escapou pela direita.
+ *
+ * Para o mural de coleta, que tem arraste e botão de arrumar: lá uma pilha
+ * ainda é uma escolha possível de quem montou o mural, mas recado fora do
+ * quadro não é escolha nenhuma — é recado que ninguém consegue ler nem
+ * alcançar. Sobreposição fica para o botão.
+ */
+export function semVazamento<T extends { positionX: number; positionY: number }>(
+  itens: T[],
+  larguraMural: number = LARGURA_PADRAO
+): T[] {
+  return realocar(itens, larguraMural, (p) => vazaPelaDireita(p, larguraMural))
 }
 
 /** Recalcula a posição de todos, na ordem recebida. */

@@ -9,7 +9,11 @@ export async function GET(request: NextRequest) {
 
   // Passa pelo helper em vez de deleteMany direto: é aqui que os blobs das
   // fotos são apagados junto, e um deleteMany solto vazaria storage.
-  const deleted = await purgarEventosExpirados()
+  //
+  // São duas contagens porque são dois prazos: `ocultados` são os murais que
+  // acabaram de sair do ar e ainda dá para resgatar, `apagados` os que já
+  // passaram da semana de resgate e sumiram de vez.
+  const { ocultados, apagados } = await purgarEventosExpirados()
 
-  return NextResponse.json({ deleted })
+  return NextResponse.json({ ocultados, apagados })
 }

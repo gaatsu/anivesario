@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { deleteEventIfExpired } from "@/lib/eventLifecycle"
+import { ocultarEventoSeVencido } from "@/lib/eventLifecycle"
 import { ESTILOS } from "@/lib/postit-visual"
 import { assinarPostit } from "@/lib/postit-token"
 import { vagaLivre } from "@/lib/arranjo"
@@ -35,7 +35,7 @@ export async function POST(
       return NextResponse.json({ message: "Event not found" }, { status: 404 })
     }
 
-    if (await deleteEventIfExpired(event)) {
+    if (await ocultarEventoSeVencido(event)) {
       return NextResponse.json({ message: "Event expired" }, { status: 404 })
     }
 

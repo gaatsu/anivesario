@@ -1,55 +1,78 @@
 import { db } from "./db"
 import { apagarFotos } from "./fotos"
+import { limiteDePurga, limiteDeVencimento, muralVencido } from "./prazos"
 
-export const EVENT_LIFETIME_MS = 12 * 60 * 60 * 1000
-
-export function isEventExpired(createdAt: Date): boolean {
-  return Date.now() - createdAt.getTime() > EVENT_LIFETIME_MS
-}
+export { PRAZO_MURAL_MS, validadeDasFotos } from "./prazos"
 
 /**
- * Lazily deletes an event if it has passed its 12h lifetime.
- * Returns true if the event was deleted (i.e. should be treated as gone).
+ * Esconde o mural se ele já passou do prazo.
  *
- * `photos` é obrigatório de propósito: apagar a linha sem apagar os binários
- * vaza storage silenciosamente, e como todo evento morre em 12h isso vazaria em
- * todo evento com foto. Exigir o campo faz o compilador cobrar de quem
- * escrever a próxima chamada.
+ * Preenche `deletedAt` em vez de apagar. Todas as consultas públicas já filtram
+ * por `deletedAt: null`, então o efeito visível é o mesmo — o mural sai do ar na
+ * hora —, mas os recados e as fotos continuam lá por uma semana.
+ *
+ * Antes isto chamava `db.event.delete` direto, e como `Postit` tem
+ * `onDelete: Cascade` o primeiro visitante a abrir um link vencido apagava, sem
+ * querer e sem volta, todos os recados que o time tinha escrito.
+ *
+ * Devolve true quando o evento deve ser tratado como inexistente.
  */
-export async function deleteEventIfExpired(event: {
+export async function ocultarEventoSeVencido(event: {
   id: string
-  createdAt: Date
-  photos: string[]
+  eventDate: Date
+  deletedAt: Date | null
 }): Promise<boolean> {
-  if (!isEventExpired(event.createdAt)) return false
+  if (event.deletedAt) return true
+  if (!muralVencido(event.eventDate)) return false
 
-  await db.event.delete({ where: { id: event.id } })
-  await apagarFotos(event.photos)
+  await db.event.update({
+    where: { id: event.id },
+    data: { deletedAt: new Date() },
+  })
   return true
 }
 
 /**
- * Remove em lote os eventos vencidos, junto com as fotos deles. Usado pelo cron
- * e pela listagem do dashboard. Faz um `findMany` antes do `deleteMany` porque
- * `deleteMany` não devolve as linhas apagadas — e sem elas não há como saber
- * quais blobs apagar.
+ * Passa a vassoura: esconde o que venceu e apaga o que já esperou demais.
+ *
+ * Usada pelo cron e pela listagem do dashboard. As fotos só são apagadas na
+ * segunda fase — apagar os binários junto com o `deletedAt` deixaria um evento
+ * resgatável sem nenhuma das imagens, o que não é resgate nenhum.
  */
-export async function purgarEventosExpirados(creatorId?: string): Promise<number> {
-  const expirados = await db.event.findMany({
+export async function purgarEventosExpirados(
+  creatorId?: string
+): Promise<{ ocultados: number; apagados: number }> {
+  const doCriador = creatorId ? { creatorId } : {}
+
+  // Fase 1: venceu, sai do ar.
+  const { count: ocultados } = await db.event.updateMany({
     where: {
-      createdAt: { lt: new Date(Date.now() - EVENT_LIFETIME_MS) },
-      ...(creatorId ? { creatorId } : {}),
+      ...doCriador,
+      deletedAt: null,
+      eventDate: { lt: limiteDeVencimento() },
+    },
+    data: { deletedAt: new Date() },
+  })
+
+  // Fase 2: escondido há tempo bastante, some de vez.
+  //
+  // `findMany` antes do `deleteMany` porque `deleteMany` não devolve as linhas
+  // apagadas — e sem elas não há como saber quais blobs apagar.
+  const aPurgar = await db.event.findMany({
+    where: {
+      ...doCriador,
+      deletedAt: { not: null, lt: limiteDePurga() },
     },
     select: { id: true, photos: true },
   })
 
-  if (expirados.length === 0) return 0
+  if (aPurgar.length === 0) return { ocultados, apagados: 0 }
 
-  type Expirado = { id: string; photos: string[] }
+  type Purgavel = { id: string; photos: string[] }
   await db.event.deleteMany({
-    where: { id: { in: expirados.map((e: Expirado) => e.id) } },
+    where: { id: { in: aPurgar.map((e: Purgavel) => e.id) } },
   })
-  await apagarFotos(expirados.flatMap((e: Expirado) => e.photos))
+  await apagarFotos(aPurgar.flatMap((e: Purgavel) => e.photos))
 
-  return expirados.length
+  return { ocultados, apagados: aPurgar.length }
 }

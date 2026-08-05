@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { deleteEventIfExpired } from "@/lib/eventLifecycle"
 import { ESTILOS } from "@/lib/postit-visual"
 import { assinarPostit } from "@/lib/postit-token"
-import { posicaoNaGrade } from "@/lib/arranjo"
+import { vagaLivre } from "@/lib/arranjo"
 
 export async function POST(
   request: NextRequest,
@@ -11,7 +11,10 @@ export async function POST(
 ) {
   try {
     const { shareLink } = await params
-    const { name, message, color, icon, template, positionX, positionY } = await request.json()
+    // Posição não vem do cliente: é o servidor que enxerga os outros recados e
+    // pode garantir que o novo não caia sobre nenhum. Depois de colado, arrastar
+    // salva pelo PATCH.
+    const { name, message, color, icon, template } = await request.json()
 
     if (!name || !message) {
       return NextResponse.json(
@@ -36,8 +39,22 @@ export async function POST(
       return NextResponse.json({ message: "Event expired" }, { status: 404 })
     }
 
-    const jaColados = await db.postit.count({ where: { eventId: event.id } })
-    const vaga = posicaoNaGrade(jaColados)
+    // As posições de verdade, não a contagem: quem apaga o próprio recado abre
+    // um buraco no meio e derruba a contagem, e aí o recado seguinte nasceria
+    // exatamente sobre um que já estava lá.
+    const jaColados = await db.postit.findMany({
+      where: { eventId: event.id },
+      select: { positionX: true, positionY: true },
+    })
+    // O tipo do parâmetro é explícito porque `prisma generate` não roda nesta
+    // máquina (proxy bloqueia o download), e sem o client gerado o retorno do
+    // findMany chega sem tipo — o tsc local acusaria um `any` implícito.
+    const vaga = vagaLivre(
+      jaColados.map((p: { positionX: number; positionY: number }) => ({
+        x: p.positionX,
+        y: p.positionY,
+      }))
+    )
 
     const postit = await db.postit.create({
       data: {
@@ -52,11 +69,8 @@ export async function POST(
         // Mesma sentinela da cor: vazio = automático. Um id fora do registro é
         // descartado aqui, para o banco nunca guardar estilo que não existe.
         template: ESTILOS.some((e) => e.id === template) ? template : "",
-        // Proxima vaga livre da grade. O sorteio anterior colocava tudo
-        // dentro de 600x300, e um recado tem ate 224 de largura: do quarto em
-        // diante eles nasciam empilhados uns sobre os outros.
-        positionX: typeof positionX === "number" ? positionX : vaga.x,
-        positionY: typeof positionY === "number" ? positionY : vaga.y,
+        positionX: vaga.x,
+        positionY: vaga.y,
       },
     })
 

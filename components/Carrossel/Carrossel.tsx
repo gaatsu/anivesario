@@ -4,11 +4,11 @@ import { useRef } from "react"
 import {
   motion,
   useMotionValue,
-  useReducedMotion,
   useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
 
 interface Props {
   fotos: string[]
@@ -25,11 +25,11 @@ interface Props {
  *
  * Reimplementado em framer-motion em vez do GSAP + ScrollTrigger do original:
  * o framer-motion já está instalado, e instalar pacote nesta máquina é uma
- * aposta. Como bônus, `useReducedMotion` desliga tudo de uma vez, coisa que a
- * versão GSAP não fazia.
+ * aposta. Como bônus, `useMovimentoReduzido` desliga tudo de uma vez, coisa que
+ * a versão GSAP não fazia.
  */
 export default function Carrossel({ fotos, className = "" }: Props) {
-  const reduzido = useReducedMotion()
+  const reduzido = useMovimentoReduzido()
   const container = useRef<HTMLDivElement>(null)
 
   const mouseX = useMotionValue(0)
@@ -71,7 +71,7 @@ export default function Carrossel({ fotos, className = "" }: Props) {
           total={fotos.length}
           px={px}
           py={py}
-          reduzido={!!reduzido}
+          reduzido={reduzido}
         />
       ))}
     </div>

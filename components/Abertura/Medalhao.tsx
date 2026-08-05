@@ -1,6 +1,7 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
 import * as Icons from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { PropsPeca } from "./pecas"
@@ -22,7 +23,7 @@ const POSICOES_BRILHO = [
 ]
 
 export default function Medalhao({ tema, cores, className = "" }: PropsPeca) {
-  const reduzido = useReducedMotion()
+  const reduzido = useMovimentoReduzido()
 
   const nomeIcone = tema.icones[0]
   const Icone = (Icons as unknown as Record<string, LucideIcon>)[nomeIcone] ?? Icons.Sparkles

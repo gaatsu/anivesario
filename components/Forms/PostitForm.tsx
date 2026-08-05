@@ -79,15 +79,10 @@ export default function PostitForm({
         : await fetch(`/api/mural/${shareLink}/postits`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name,
-              message,
-              color,
-              icon,
-              template,
-              positionX: Math.random() * 600,
-              positionY: Math.random() * 300,
-            }),
+            // Sem posição: quem decide onde colar é o servidor, que enxerga os
+            // outros recados. Este formulário mandava `Math.random() * 600` por
+            // `300`, e num espaço desses não cabem três recados sem colisão.
+            body: JSON.stringify({ name, message, color, icon, template }),
           })
 
       if (res.ok) {

@@ -26,19 +26,39 @@ const RECADOS = [
   "Obrigado por tudo esses anos. Foi um prazer trabalhar contigo!",
 ]
 
-// As mesmas coordenadas que a API sorteia hoje: Math.random() * 600 por 300.
-const POSTITS = Array.from({ length: 12 }, (_, i) => ({
-  id: String(i),
-  name: NOMES[i % NOMES.length],
-  message: RECADOS[i % RECADOS.length],
-  color: "",
-  icon: null,
-  template: "",
-  ...(() => {
-    const p = posicaoNaGrade(i, 1100)
-    return { positionX: p.x, positionY: p.y }
-  })(),
-}))
+function recado(i: number, posicao: { x: number; y: number }) {
+  return {
+    id: String(i),
+    name: NOMES[i % NOMES.length],
+    message: RECADOS[i % RECADOS.length],
+    color: "",
+    icon: null,
+    template: "",
+    positionX: posicao.x,
+    positionY: posicao.y,
+  }
+}
+
+const POSTITS = Array.from({ length: 12 }, (_, i) => recado(i, posicaoNaGrade(i, 1100)))
+
+/**
+ * Um mural como os criados antes da grade: posições sorteadas dentro de 600x300,
+ * onde não cabem três recados sem colisão.
+ *
+ * Serve para olhar o que o homenageado vê no link da revelação, que é o único
+ * lugar sem botão de arrumar nem arraste. Semente fixa em vez de Math.random
+ * para a bancada dar sempre a mesma tela.
+ */
+const POSTITS_LEGADO = (() => {
+  let semente = 7
+  const sorteio = () => {
+    semente = (semente * 1103515245 + 12345) % 2147483648
+    return semente / 2147483648
+  }
+  return Array.from({ length: 10 }, (_, i) =>
+    recado(i, { x: Math.round(sorteio() * 600), y: Math.round(sorteio() * 300) })
+  )
+})()
 
 const FOTOS = Array.from(
   { length: 6 },
@@ -74,6 +94,13 @@ export default function PreviewMobile() {
           onExcluir={() => {}}
           tema={tema}
         />
+      </section>
+
+      <section>
+        <h2 className="text-seccao font-bold text-tinta">
+          Mural antigo, somente-leitura (posições sorteadas em 600x300)
+        </h2>
+        <MuralCanvas postits={POSTITS_LEGADO} readOnly tema={tema} />
       </section>
 
       <section>

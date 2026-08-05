@@ -7,7 +7,7 @@ import PostitCard from "./PostitCard"
 import type { Tema } from "@/lib/themes"
 import { ACIMA_DE_CELULAR, useMediaQuery } from "@/lib/useMediaQuery"
 import { meusRecados } from "@/lib/meus-recados"
-import { alturaDaGrade, organizarEmGrade } from "@/lib/arranjo"
+import { alturaNecessaria, organizarEmGrade, semSobreposicao } from "@/lib/arranjo"
 
 interface Postit {
   id: string
@@ -55,8 +55,12 @@ export default function MuralCanvas({
   const muralLivre = useMediaQuery(ACIMA_DE_CELULAR)
 
   useEffect(() => {
-    setLocalPostits(postits)
-  }, [postits])
+    // Somente-leitura é o link da revelação: lá ninguém arrasta nem tem o botão
+    // de arrumar, então o homenageado seria o único sem saída diante de uma
+    // pilha. Só quem está sobreposto sai do lugar, e só na tela — o banco
+    // continua guardando a disposição que alguém montou à mão.
+    setLocalPostits(readOnly ? semSobreposicao(postits) : postits)
+  }, [postits, readOnly])
 
   useEffect(() => {
     setMeus(meusRecados(postits.map((p) => p.id)))
@@ -146,9 +150,9 @@ export default function MuralCanvas({
       )}
       <div
         ref={container}
-        // Altura conforme a quantidade: com min-h fixo de 600px, a partir do
-        // decimo recado a ultima linha da grade ficava cortada por baixo.
-        style={muralLivre ? { minHeight: alturaDaGrade(localPostits.length) } : undefined}
+        // Altura pelo recado mais baixo: com min-h fixo de 600px, a partir do
+        // decimo recado a ultima linha ficava cortada por baixo.
+        style={muralLivre ? { minHeight: alturaNecessaria(localPostits) } : undefined}
         className={`w-full rounded-2xl bg-[url('/cork-texture.png')] bg-cover ${
           muralLivre
             ? "relative"

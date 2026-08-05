@@ -64,19 +64,126 @@ export function posicaoNaGrade(
   }
 }
 
-/** Recalcula a posição de todos, na ordem recebida. */
-export function organizarEmGrade<T extends { id: string }>(
+export interface Ponto {
+  x: number
+  y: number
+}
+
+/**
+ * Perímetro de um recado, para efeito de colisão.
+ *
+ * Todo recado é tratado pelo tamanho do maior (224x216), mesmo quando o dele é
+ * menor: errar para o lado do espaço sobrando só afasta dois recados um pouco
+ * demais, enquanto errar para o outro lado é exatamente o defeito que se quer
+ * eliminar. Como as duas caixas têm o mesmo tamanho, sobrepor-se é só uma
+ * questão de distância entre os cantos.
+ */
+export function seSobrepoe(a: Ponto, b: Ponto): boolean {
+  return Math.abs(a.x - b.x) < LARGURA_RECADO && Math.abs(a.y - b.y) < ALTURA_RECADO
+}
+
+/**
+ * Primeira vaga da grade que não encosta em nenhum recado já colado.
+ *
+ * Contar quantos recados existem e pedir a vaga daquele índice não serve: quem
+ * apaga o próprio recado abre um buraco no meio, a contagem cai, e o recado
+ * seguinte nasce exatamente sobre um que já estava lá. Só olhar as posições de
+ * verdade resolve — e de quebra desvia dos recados arrastados à mão e dos
+ * murais antigos, cujas posições não seguem grade nenhuma.
+ */
+export function vagaLivre(ocupadas: Ponto[], larguraMural: number = LARGURA_PADRAO): Ponto {
+  // Uma caixa qualquer cobre no máximo 4 células da grade, então em
+  // 4 * ocupadas + 1 vagas há certamente uma livre. O limite é só cinto de
+  // segurança contra laço infinito; na prática a saída vem nas primeiras.
+  const limite = ocupadas.length * 4 + 1
+
+  for (let i = 0; i < limite; i++) {
+    const vaga = posicaoNaGrade(i, larguraMural)
+    if (!ocupadas.some((o) => seSobrepoe(vaga, o))) return vaga
+  }
+
+  // Inalcançável pela conta acima, mas se chegar aqui é melhor uma linha nova
+  // embaixo de tudo do que um recado empilhado.
+  const fundo = Math.max(0, ...ocupadas.map((o) => o.y))
+  return { x: posicaoNaGrade(0, larguraMural).x, y: fundo + ALTURA_CELULA }
+}
+
+/**
+ * Verdadeiro quando o recado passa da borda direita do mural.
+ *
+ * Acontece porque quem escolhe a vaga na hora de colar é o servidor, que não
+ * tem como saber a largura da tela e assume LARGURA_PADRAO. Numa janela mais
+ * estreita que isso, a última coluna cai fora do quadro — medido em 411px para
+ * fora numa janela de 660. Também pega o recado arrastado para a direita numa
+ * tela grande e aberto depois numa menor.
+ */
+function vazaPelaDireita(p: Ponto, larguraMural: number): boolean {
+  return p.x + LARGURA_RECADO > larguraMural
+}
+
+/**
+ * Recoloca só quem o teste reprovar, preservando o resto do arranjo.
+ *
+ * Em duas passadas, e não numa só: decidir e realocar ao mesmo tempo faz a vaga
+ * ser escolhida enxergando apenas os recados já visitados, e o recado realocado
+ * cai em cima de um que ainda está por vir na lista. Foi assim que consertar o
+ * vazamento lateral criou sobreposição onde não havia.
+ */
+function realocar<T extends { positionX: number; positionY: number }>(
   itens: T[],
-  larguraMural: number = LARGURA_PADRAO
-): { id: string; positionX: number; positionY: number }[] {
+  larguraMural: number,
+  precisaSair: (p: Ponto, mantidos: Ponto[]) => boolean
+): T[] {
+  const mantidos: Ponto[] = []
+  const mudam = new Set<number>()
+
+  itens.forEach((item, i) => {
+    const atual = { x: item.positionX, y: item.positionY }
+    if (precisaSair(atual, mantidos)) mudam.add(i)
+    else mantidos.push(atual)
+  })
+
+  // Começa sabendo de todo mundo que fica, e não só dos anteriores.
+  const ocupadas = [...mantidos]
+
   return itens.map((item, i) => {
-    const { x, y } = posicaoNaGrade(i, larguraMural)
-    return { id: item.id, positionX: x, positionY: y }
+    if (!mudam.has(i)) return item
+
+    const vaga = vagaLivre(ocupadas, larguraMural)
+    ocupadas.push(vaga)
+    return { ...item, positionX: vaga.x, positionY: vaga.y }
   })
 }
 
-/** Altura necessária para o mural não cortar a última linha. */
-export function alturaDaGrade(quantidade: number, larguraMural: number = LARGURA_PADRAO): number {
-  const linhas = Math.ceil(quantidade / colunasQueCabem(larguraMural))
-  return Math.max(600, 40 + linhas * ALTURA_CELULA)
+/**
+ * Afasta quem está sobreposto ou fora do quadro, preservando o resto.
+ *
+ * Para o mural somente-leitura, onde ninguém tem como arrastar nem clicar em
+ * "arrumar": o homenageado não pode ser o único a ver uma pilha. Quem já está
+ * em lugar limpo não sai do lugar — arrumar tudo apagaria a disposição que
+ * alguém montou à mão.
+ */
+export function semSobreposicao<T extends { positionX: number; positionY: number }>(
+  itens: T[],
+  larguraMural: number = LARGURA_PADRAO
+): T[] {
+  return realocar(
+    itens,
+    larguraMural,
+    (p, aceitos) => vazaPelaDireita(p, larguraMural) || aceitos.some((o) => seSobrepoe(p, o))
+  )
+}
+
+
+/**
+ * Altura necessária para o mural não cortar ninguém.
+ *
+ * Medida pela posição real do recado mais baixo, e não pela quantidade dividida
+ * em linhas: o servidor coloca na grade de 1100px sem saber a largura da tela,
+ * quem arrasta põe onde quiser, e murais antigos não seguem grade alguma. A
+ * conta por linhas só acerta quando ninguém saiu do lugar previsto.
+ */
+export function alturaNecessaria(itens: { positionY: number }[]): number {
+  const fundo = itens.reduce((maior, item) => Math.max(maior, item.positionY), 0)
+  return Math.max(600, fundo + ALTURA_RECADO + 40)
 }

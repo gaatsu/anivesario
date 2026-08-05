@@ -1,6 +1,7 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
 import type { PropsPeca } from "./pecas"
 
 /**
@@ -57,7 +58,7 @@ const surgir = {
 
 export default function Bolo({ tema, cores, className = "" }: PropsPeca) {
   const acento = tema.acento
-  const reduzido = useReducedMotion()
+  const reduzido = useMovimentoReduzido()
   const de = reduzido ? "visivel" : "oculto"
   const t = (delay: number, duration = 0.55) =>
     reduzido ? { duration: 0 } : { delay, duration, ease: [0.22, 1, 0.36, 1] as const }

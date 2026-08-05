@@ -1,6 +1,7 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
 import { useCallback, useEffect, useState } from "react"
 import type { PropsAnimacao } from "./tipos"
 import { gerarBaloes, transicaoDoBalao, type Balao } from "@/lib/balao"
@@ -8,7 +9,7 @@ import { gerarBaloes, transicaoDoBalao, type Balao } from "@/lib/balao"
 let proximoId = 0
 
 export default function BalloonsAnimation({ fase, cores, intensidade }: PropsAnimacao) {
-  const reduzir = useReducedMotion()
+  const reduzir = useMovimentoReduzido()
   const [baloes, setBaloes] = useState<Balao[]>([])
   const celebrando = fase === "celebracao"
 

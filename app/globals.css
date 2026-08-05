@@ -143,12 +143,24 @@
   }
 
   /* CSS não respeita a preferência sozinho, diferente do canvas-confetti. Sem
-     isto, quem pediu menos movimento veria a chama tremendo para sempre. */
+     isto, quem pediu menos movimento veria a chama tremendo para sempre.
+
+     O `:not([data-movimento="completo"])` é a brecha para quem pediu para ver:
+     lib/movimento.ts marca o <html> quando alguém escolhe as animações apesar
+     do ajuste do sistema, e sem esta condição a chama continuaria apagada
+     enquanto o resto da cena se mexe. */
   @media (prefers-reduced-motion: reduce) {
-    .chama,
-    .halo-vela {
+    :root:not([data-movimento="completo"]) .chama,
+    :root:not([data-movimento="completo"]) .halo-vela {
       animation: none;
     }
+  }
+
+  /* Fora da media query: quem dispensou o convite pediu a cena parada mesmo com
+     o sistema não pedindo nada. */
+  :root[data-movimento="reduzido"] .chama,
+  :root[data-movimento="reduzido"] .halo-vela {
+    animation: none;
   }
 
   /* Cartões sobre papel: branco puro com sombra dura destoa. Um branco levemente

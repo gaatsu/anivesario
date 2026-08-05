@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import confetti from "canvas-confetti"
 import { resolverAnimacoes } from "@/lib/themes"
+import { useMovimentoReduzido } from "@/lib/movimento"
 import {
   DURACAO_CELEBRACAO_MS,
   type Disparador,
@@ -37,17 +38,9 @@ export default function AnimationLayer({ animations, cores }: AnimationLayerProp
   const [fase, setFase] = useState<FaseAnimacao>("celebracao")
   const [visivel, setVisivel] = useState(true)
 
-  // Começa desligado: se a preferência do sistema for reduzir movimento, nada
-  // chega a rodar nem por um frame.
-  const [reduzirMovimento, setReduzirMovimento] = useState(true)
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const aplicar = () => setReduzirMovimento(mq.matches)
-    aplicar()
-    mq.addEventListener("change", aplicar)
-    return () => mq.removeEventListener("change", aplicar)
-  }, [])
+  // Consultava o matchMedia por conta própria, o que ignorava a escolha de quem
+  // pediu para ver as animações mesmo com o sistema mandando reduzir.
+  const reduzirMovimento = useMovimentoReduzido()
 
   // useWorker tira a animação da thread principal. Como a fase de ambiente roda
   // indefinidamente, é o que separa a página fluida da travada ao rolar recados.
@@ -58,7 +51,10 @@ export default function AnimationLayer({ animations, cores }: AnimationLayerProp
     const instancia = confetti.create(canvas, {
       resize: true,
       useWorker: true,
-      disableForReducedMotion: true,
+      // Nosso valor, não `true` fixo: com `true` o canvas-confetti consulta o
+      // matchMedia por conta própria e se recusa a disparar, anulando por
+      // dentro a escolha de quem pediu para ver as animações.
+      disableForReducedMotion: reduzirMovimento,
     })
     instanciaRef.current = instancia
 

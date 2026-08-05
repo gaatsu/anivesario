@@ -10,11 +10,12 @@ aniversário, o medalhão nos demais. Trocar ou criar uma envolve **dois passos*
 ```tsx
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
 import type { PropsPeca } from "./pecas"
 
 export default function MinhaPeca({ tema, cores, className = "" }: PropsPeca) {
-  const reduzido = useReducedMotion()
+  const reduzido = useMovimentoReduzido()
 
   return (
     <svg viewBox="0 0 260 244" className={className} role="img" aria-label="descreva o desenho">
@@ -75,11 +76,16 @@ A abertura e a bancada de preview leem daqui. Tema sem entrada cai no medalhão.
 
 ```bash
 npx next dev -p 3987
-# abrir http://localhost:3987/preview/abertura
+# as peças lado a lado
 node scripts/screenshot.mjs http://localhost:3987/preview/abertura saida.png
+# a cena inteira tocando, um tema por vez
+node scripts/conferir-movimento.mjs \
+  "http://localhost:3987/preview/abertura/completa?tema=birthday" .
 ```
 
-A rota mostra as cinco peças lado a lado e 404 em produção.
+`/preview/abertura` mostra as cinco peças lado a lado.
+`/preview/abertura/completa` toca a abertura de verdade, que é onde se vê o
+convite de animação. As duas dão 404 em produção.
 
 ## Três armadilhas
 
@@ -87,11 +93,18 @@ A rota mostra as cinco peças lado a lado e 404 em produção.
 gira em torno da origem do `viewBox`, não do próprio desenho — a peça sai voando
 para fora da tela. Vale para todo `motion.g` que escale ou rotacione.
 
-**CSS não respeita `prefers-reduced-motion` sozinho.** Se usar `@keyframes` em
-vez de framer-motion, desligue à mão dentro de
-`@media (prefers-reduced-motion: reduce)` no `globals.css` — é o que as classes
-`.chama` fazem. Sem isso a tela fica tremendo para quem pediu menos movimento.
-Com framer-motion, `useReducedMotion()` resolve.
+**Use `useMovimentoReduzido()`, não o `useReducedMotion()` do framer-motion.**
+O hook do framer-motion só lê o ajuste do sistema, e quem escolher "Ver com
+animação" na abertura continuaria vendo a peça parada. O nosso (`lib/movimento.ts`)
+combina o ajuste do sistema com a escolha guardada, e tem a mesma assinatura.
+
+**CSS não respeita a preferência sozinho.** Se usar `@keyframes` em vez de
+framer-motion, desligue à mão no `globals.css` — é o que as classes `.chama`
+fazem. Copie as duas regras de lá, e não só a do `@media`: uma desliga quando o
+sistema pede redução **e** ninguém escolheu ver
+(`:root:not([data-movimento="completo"])`), a outra desliga quando a pessoa
+pediu para reduzir (`:root[data-movimento="reduzido"]`). Só o `@media` deixaria
+a chama apagada para quem pediu para ver.
 
 **Override por propriedade no `transition` não herda o resto.** No framer-motion,
 `transition={{ duration: 8, opacity: { times: [...] } }}` faz a opacidade rodar

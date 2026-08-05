@@ -1,14 +1,15 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import {
   motion,
   useMotionValue,
-  useReducedMotion,
   useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion"
+import { useMovimentoReduzido } from "@/lib/movimento"
+import FotoAmpliada from "./FotoAmpliada"
 
 interface Props {
   fotos: string[]
@@ -25,12 +26,13 @@ interface Props {
  *
  * Reimplementado em framer-motion em vez do GSAP + ScrollTrigger do original:
  * o framer-motion já está instalado, e instalar pacote nesta máquina é uma
- * aposta. Como bônus, `useReducedMotion` desliga tudo de uma vez, coisa que a
- * versão GSAP não fazia.
+ * aposta. Como bônus, `useMovimentoReduzido` desliga tudo de uma vez, coisa que
+ * a versão GSAP não fazia.
  */
 export default function Carrossel({ fotos, className = "" }: Props) {
-  const reduzido = useReducedMotion()
+  const reduzido = useMovimentoReduzido()
   const container = useRef<HTMLDivElement>(null)
+  const [ampliada, setAmpliada] = useState<number | null>(null)
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -71,9 +73,17 @@ export default function Carrossel({ fotos, className = "" }: Props) {
           total={fotos.length}
           px={px}
           py={py}
-          reduzido={!!reduzido}
+          reduzido={reduzido}
+          aoAbrir={() => setAmpliada(i)}
         />
       ))}
+
+      <FotoAmpliada
+        fotos={fotos}
+        aberta={ampliada}
+        aoFechar={() => setAmpliada(null)}
+        aoTrocar={setAmpliada}
+      />
     </div>
   )
 }
@@ -85,9 +95,10 @@ interface CardProps {
   px: MotionValue<number>
   py: MotionValue<number>
   reduzido: boolean
+  aoAbrir: () => void
 }
 
-function Card({ url, indice, total, px, py, reduzido }: CardProps) {
+function Card({ url, indice, total, px, py, reduzido, aoAbrir }: CardProps) {
   // Hooks por card, e não um laço de hooks no pai: assim adicionar ou remover
   // uma foto não muda a quantidade de hooks chamada por componente.
   const desvio = indice - (total - 1) / 2
@@ -98,6 +109,8 @@ function Card({ url, indice, total, px, py, reduzido }: CardProps) {
 
   const x = useTransform(px, (v) => v * profundidade)
   const y = useTransform(py, (v) => v * profundidade * 0.5)
+
+  const [pairado, setPairado] = useState(false)
 
   const inclinacaoX = useMotionValue(0)
   const inclinacaoY = useMotionValue(0)
@@ -118,7 +131,9 @@ function Card({ url, indice, total, px, py, reduzido }: CardProps) {
 
   return (
     <motion.div
-      style={{ x, y, zIndex: camada }}
+      // Na frente de todo mundo enquanto está sob o mouse: sem isto o card
+      // cresce por baixo dos vizinhos, e o zoom aparece cortado dos dois lados.
+      style={{ x, y, zIndex: pairado ? total + 10 : camada }}
       className="relative -ml-[clamp(0.75rem,4vw,1.75rem)] first:ml-0"
     >
       {/* Camada 1: entrada. Separada da flutuação porque as duas animam `y` — no
@@ -139,9 +154,19 @@ function Card({ url, indice, total, px, py, reduzido }: CardProps) {
         }
       >
         {/* Camada 2: flutuação contínua + inclinação no hover. */}
-        <motion.div
+        {/* Botão, e não div com onClick: abrir a foto precisa funcionar no
+            teclado, e no celular — onde hover não existe — o clique é o único
+            jeito de ver a imagem inteira. */}
+        <motion.button
+          type="button"
+          onClick={aoAbrir}
+          aria-label={`Ampliar a foto ${indice + 1} de ${total}`}
           onMouseMove={inclinar}
-          onMouseLeave={desinclinar}
+          onMouseEnter={() => setPairado(true)}
+          onMouseLeave={() => {
+            setPairado(false)
+            desinclinar()
+          }}
           style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
           animate={reduzido ? undefined : { y: [0, -(8 + (indice % 3) * 4), 0] }}
           transition={
@@ -154,8 +179,11 @@ function Card({ url, indice, total, px, py, reduzido }: CardProps) {
                   ease: "easeInOut",
                 }
           }
-          whileHover={reduzido ? undefined : { scale: 1.12 }}
-          className="w-[clamp(4.5rem,17vw,8.5rem)] aspect-[2/3] overflow-hidden rounded-xl bg-white p-1.5 shadow-[0_10px_30px_-12px_rgb(59_49_41/0.45)] ring-1 ring-black/5"
+          // 1.12 mal se notava no meio da flutuação, que já move o card 8-16px.
+          // 1.45 destaca de verdade qual está sob o mouse.
+          whileHover={reduzido ? undefined : { scale: 1.45 }}
+          whileTap={reduzido ? undefined : { scale: 0.96 }}
+          className="block w-[clamp(4.5rem,17vw,8.5rem)] aspect-[2/3] cursor-zoom-in overflow-hidden rounded-xl bg-white p-1.5 shadow-[0_10px_30px_-12px_rgb(59_49_41/0.45)] ring-1 ring-black/5"
         >
           {/* <img> e não next/image: as URLs vêm do Blob em runtime, e o
               componente do Next exigiria configurar remotePatterns para um
@@ -168,7 +196,7 @@ function Card({ url, indice, total, px, py, reduzido }: CardProps) {
             draggable={false}
             className="h-full w-full rounded-lg object-cover select-none"
           />
-        </motion.div>
+        </motion.button>
       </motion.div>
     </motion.div>
   )

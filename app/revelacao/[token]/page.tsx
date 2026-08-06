@@ -9,6 +9,7 @@ import Abertura from "@/components/Abertura/Abertura"
 import Carrossel from "@/components/Carrossel/Carrossel"
 import { PALETA_ANIMACAO, resolverTema } from "@/lib/themes"
 import type { FotoAssinada } from "@/lib/fotos"
+import { exportarMuralEmPdf } from "@/lib/exportar-pdf"
 
 // sessionStorage é bloqueado em navegação privada e com cookies desativados, e
 // aí lança em vez de retornar null. Falhar para "ainda não viu" é o lado certo
@@ -62,6 +63,7 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
   const [showAnimations, setShowAnimations] = useState(false)
   const [mostrarAbertura, setMostrarAbertura] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [erroExport, setErroExport] = useState("")
   const muralRef = useRef<HTMLDivElement>(null)
 
   const fetchEvent = useCallback(async () => {
@@ -104,20 +106,17 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
   const handleExportPdf = async () => {
     if (!muralRef.current) return
     setIsExporting(true)
+    setErroExport("")
     try {
-      const html2pdf = (await import("html2pdf.js")).default
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: `mural-${event?.title || "evento"}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-        })
-        .from(muralRef.current)
-        .save()
+      await exportarMuralEmPdf(muralRef.current, {
+        nome: `mural-${event?.title || "evento"}`,
+      })
     } catch (err) {
+      // Antes isto só ia para o console, e o botão voltava ao normal sem dizer
+      // nada — o export estava quebrado havia tempo e, de fora, parecia que
+      // clicar simplesmente não fazia efeito.
       console.error("Error exporting PDF:", err)
+      setErroExport("Não foi possível gerar o PDF. Tente de novo.")
     } finally {
       setIsExporting(false)
     }
@@ -192,7 +191,7 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
           <Carrossel fotos={event.photos.map((f) => f.url)} />
         )}
 
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
           <button
             onClick={handleExportPdf}
             disabled={isExporting}
@@ -201,6 +200,11 @@ export default function RevelacaoPage({ params }: { params: Promise<{ token: str
             <Download className="w-5 h-5" />
             {isExporting ? "Exportando..." : "Salvar em PDF"}
           </button>
+          {erroExport && (
+            <p role="alert" className="text-apoio text-red-700">
+              {erroExport}
+            </p>
+          )}
         </div>
 
         <div ref={muralRef}>

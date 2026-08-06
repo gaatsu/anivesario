@@ -1,10 +1,10 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import MuralCanvas from "@/components/Mural/MuralCanvas"
 import { resolverTema } from "@/lib/themes"
 import { posicaoNaGrade } from "@/lib/arranjo"
-import { exportarMuralEmPdf } from "@/lib/exportar-pdf"
+import { exportarMuralEmPdf, normalizarCoresParaCaptura } from "@/lib/exportar-pdf"
 
 /**
  * Bancada do export em PDF.
@@ -16,15 +16,25 @@ import { exportarMuralEmPdf } from "@/lib/exportar-pdf"
 
 const NOMES = ["Ana", "Bruno", "Carla", "Diego"]
 
-const POSTITS = Array.from({ length: 4 }, (_, i) => {
+// Precisa parecer um mural de verdade, não um mínimo confortável. A primeira
+// versão desta bancada tinha `icon: null` em todos os recados e por isso deu o
+// export como consertado: o ícone é um SVG do lucide com `stroke="currentColor"`,
+// e é justamente o `stroke` que derrubava o html2canvas.
+const ICONES = ["Cake", null, "Heart", null, "PartyPopper"]
+// Uma cor escolhida à mão entra na roda: esse caminho usa hex, não oklch, e
+// tem de continuar funcionando também.
+const CORES = ["", "", "#FEF08A", "", ""]
+const TEMPLATES = ["", "fita_caveat", "percevejo_kalam", "fita_kalam", ""]
+
+const POSTITS = Array.from({ length: 5 }, (_, i) => {
   const p = posicaoNaGrade(i, 1100)
   return {
     id: String(i),
-    name: NOMES[i],
+    name: NOMES[i % NOMES.length],
     message: "Parabéns! Que venha um ano incrível.",
-    color: "",
-    icon: null,
-    template: "",
+    color: CORES[i],
+    icon: ICONES[i],
+    template: TEMPLATES[i],
     positionX: p.x,
     positionY: p.y,
   }
@@ -35,6 +45,15 @@ export default function PreviewExport() {
   const [exportando, setExportando] = useState(false)
   const [erro, setErro] = useState("")
   const tema = resolverTema("birthday")
+
+  // Exposta para o scripts/conferir-export.mjs poder afirmar o que interessa:
+  // que depois de normalizar não sobra nenhuma cor que o html2canvas recuse.
+  // Só baixar o PDF não bastaria — foi assim que a primeira correção passou
+  // por boa enquanto ainda quebrava em recado com ícone.
+  useEffect(() => {
+    ;(window as unknown as Record<string, unknown>).__normalizarCores =
+      normalizarCoresParaCaptura
+  }, [])
 
   // Cópia fiel do handler da revelação, para a bancada falhar pelo mesmo motivo.
   const exportar = async () => {

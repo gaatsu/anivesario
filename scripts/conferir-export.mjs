@@ -62,7 +62,38 @@ const arquivo = await baixou
 
 const naTela = (await pagina.locator("[data-teste=erro]").textContent())?.trim()
 
+// Baixar o PDF prova que hoje funciona; isto prova *por quê*, e é o que pega um
+// elemento novo trazendo cor que o html2canvas recusa — foi exatamente o caso
+// do ícone do recado, que passou despercebido porque a bancada não tinha nenhum.
+const sobrando = await pagina.evaluate(() => {
+  const mural = document.querySelector("[class*='cork-texture']")
+  const normalizar = window.__normalizarCores
+  if (!mural || typeof normalizar !== "function") return "bancada não expôs __normalizarCores"
+
+  const clone = mural.cloneNode(true)
+  document.body.append(clone)
+  normalizar(clone)
+
+  const RE = /\b(?:oklch|oklab|lab|lch|color)\([^()]*\)/
+  const restantes = []
+  for (const el of [clone, ...clone.querySelectorAll("*")]) {
+    const cs = getComputedStyle(el)
+    for (let i = 0; i < cs.length; i++) {
+      const v = cs.getPropertyValue(cs[i])
+      if (v && RE.test(v)) restantes.push(`${el.tagName}.${cs[i]} = ${v.slice(0, 40)}`)
+    }
+  }
+  clone.remove()
+  return restantes.slice(0, 10)
+})
+
 console.log("baixou:", arquivo ? JSON.stringify(arquivo) : "NADA")
+if (Array.isArray(sobrando) && sobrando.length === 0) {
+  console.log("cores nao suportadas apos normalizar: nenhuma")
+} else {
+  console.log("cores nao suportadas apos normalizar:", sobrando)
+  process.exitCode = 1
+}
 if (naTela) console.log("erro na tela:", naTela)
 if (erros.length) {
   console.log("erros no console:")

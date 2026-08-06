@@ -9,6 +9,7 @@ import { QRCodeCanvas } from "qrcode.react"
 import BotaoCompartilhar from "@/components/ui/BotaoCompartilhar"
 import UploadFotos from "@/components/Forms/UploadFotos"
 import { ANIMACOES, TEMAS, TEMA_PADRAO, resolverTema } from "@/lib/themes"
+import { paraCampoDeData, paraInstante } from "@/lib/data-evento"
 import type { FotoAssinada } from "@/lib/fotos"
 
 interface Event {
@@ -23,35 +24,6 @@ interface Event {
   revealLink: string
   status: string
   createdAt: string
-}
-
-/**
- * `<input type="datetime-local">` só aceita "YYYY-MM-DDTHH:mm" em horário local;
- * o que vem da API é ISO em UTC. Sem esta conversão, abrir a edição mostraria o
- * campo vazio e salvar apagaria a data.
- */
-/**
- * Caminho de volta: o que o campo mostra vira um instante sem ambiguidade.
- *
- * `datetime-local` entrega "2026-08-20T14:00" **sem fuso**, e o servidor roda em
- * UTC — então `new Date(...)` lá interpretava as 14:00 escolhidas em Brasília
- * como 14:00 UTC. O horário voltava para a tela 3h mais cedo, e como a edição
- * relê o campo e regrava, cada vez que o evento era salvo a data andava mais 3h
- * para trás.
- *
- * Aqui a conversão acontece no navegador, onde "local" é de fato o fuso de quem
- * marcou, e o servidor recebe ISO com offset.
- */
-function paraInstante(valorDoCampo: string): string {
-  const d = new Date(valorDoCampo)
-  return Number.isNaN(d.getTime()) ? valorDoCampo : d.toISOString()
-}
-
-function paraCampoDeData(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 // O formulário já nasce com as animações do tema padrão, para que criar um

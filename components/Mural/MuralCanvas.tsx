@@ -125,7 +125,10 @@ export default function MuralCanvas({
         // Altura pelo recado mais baixo: com min-h fixo de 600px, a partir do
         // decimo recado a ultima linha ficava cortada por baixo.
         style={muralLivre ? { minHeight: alturaNecessaria(localPostits) } : undefined}
-        className={`w-full rounded-2xl bg-[url('/cork-texture.png')] bg-cover ${
+        // `bg-repeat` e não `bg-cover`: a textura é um ladrilho de 192px que
+        // fecha nas quatro bordas (ver scripts/gerar-cortica.mjs). Esticado
+        // para cobrir um mural de 1400px, cada grânulo viraria uma mancha.
+        className={`w-full rounded-2xl bg-[url('/cork-texture.png')] bg-repeat ${
           muralLivre
             ? "relative"
             : "flex flex-col items-center gap-6 px-2 py-6"

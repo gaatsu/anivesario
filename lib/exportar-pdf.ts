@@ -18,27 +18,14 @@
  */
 
 /**
- * Propriedades que o html2canvas lê e que podem carregar cor.
+ * Funções de cor que o html2canvas 1.x não sabe interpretar.
  *
- * A lista é maior do que parece necessária porque `borderColor`, `outlineColor`
- * e companhia valem `currentColor` por padrão: basta o texto ser `oklch` para
- * todas herdarem o valor e cada uma virar um ponto de falha.
+ * Varre-se o valor inteiro em vez de trocá-lo por completo: a cor pode estar
+ * dentro de um gradiente ou de uma sombra, cercada de outras coisas que
+ * precisam sobreviver.
  */
-const PROPRIEDADES_DE_COR = [
-  "color",
-  "backgroundColor",
-  "borderTopColor",
-  "borderRightColor",
-  "borderBottomColor",
-  "borderLeftColor",
-  "outlineColor",
-  "textDecorationColor",
-  "columnRuleColor",
-  "caretColor",
-] as const
-
-/** Funções de cor que o html2canvas 1.x não sabe interpretar. */
-const NAO_SUPORTADA = /oklch|oklab|\blab\(|\blch\(|color\(/
+const FUNCAO_NAO_SUPORTADA = /\b(?:oklch|oklab|lab|lch|color)\([^()]*\)/
+const TODAS_AS_OCORRENCIAS = new RegExp(FUNCAO_NAO_SUPORTADA.source, "g")
 
 /**
  * Converte qualquer cor que o navegador saiba pintar em `rgba()`.
@@ -84,14 +71,20 @@ export function normalizarCoresParaCaptura(raiz: HTMLElement): number {
     if (!(el instanceof HTMLElement) && !(el instanceof SVGElement)) continue
     const computado = getComputedStyle(el)
 
-    for (const prop of PROPRIEDADES_DE_COR) {
-      const valor = computado[prop]
-      if (typeof valor !== "string" || !NAO_SUPORTADA.test(valor)) continue
-      el.style.setProperty(
-        // camelCase → kebab-case, que é o que setProperty espera.
-        prop.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`),
-        converter(valor)
-      )
+    // Percorre **todas** as propriedades computadas em vez de uma lista escrita
+    // à mão. Já tentei a lista, e ela saiu curta duas vezes: primeiro esqueci
+    // que `border`, `outline` e `caret` valem `currentColor` por padrão e
+    // herdam o `oklch` do texto; depois que o ícone do recado é um SVG do
+    // lucide com `stroke="currentColor"` — e ainda faltavam
+    // `-webkit-text-fill-color`, `-webkit-text-stroke-color` e
+    // `text-emphasis-color`. Uma cor pode aparecer em qualquer propriedade que
+    // aceite cor, e enumerá-las é uma lista que nunca fecha.
+    for (let i = 0; i < computado.length; i++) {
+      const prop = computado[i]
+      const valor = computado.getPropertyValue(prop)
+      if (!valor || !FUNCAO_NAO_SUPORTADA.test(valor)) continue
+
+      el.style.setProperty(prop, valor.replace(TODAS_AS_OCORRENCIAS, converter))
       trocadas++
     }
   }
